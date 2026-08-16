@@ -256,6 +256,134 @@ class TestItemMatching(unittest.TestCase):
         self.assertFalse(settlement.match_item("F1-01", ""))
 
 
+class TestStrictItems(unittest.TestCase):
+    """
+    案例文件的语义必须是「没写 = 没发生」。
+
+    catalog 里的 default 是给 Web 端预填演示数据用的（S3-01 赎金默认 80 万）。
+    如果部分提交的案例继承这些默认值，一个写明「未支付赎金」的案子会凭空
+    多出 80 万核定损失，而且从结果上完全看不出来——这是静默错误，最危险。
+    """
+
+    def test_partial_case_does_not_inherit_demo_defaults(self):
+        case = {
+            "policy_id": "pingan-cyber-b",
+            "coverage_mode": "policy",
+            "categories": {"F1": {"switch": "ON"}},
+            "items": {"F1-01": {"params": {"p1": 10, "p2": 1000}}},
+        }
+        r = compute(case)
+        by = {i["code"]: i for i in r["items"]}
+        self.assertEqual(by["F1-01"]["assessed_loss"], 10000.0)
+        # 这三项在 catalog 里有非零默认值，未声明就必须记 0
+        self.assertEqual(by["S3-01"]["assessed_loss"], 0.0)
+        self.assertEqual(by["S1-01"]["assessed_loss"], 0.0)
+        self.assertEqual(by["F6-02"]["assessed_loss"], 0.0)
+        self.assertEqual(by["S2-05"]["assessed_loss"], 0.0)
+        self.assertEqual(r["summary"]["fact_total"], 10000.0)
+
+    def test_full_submission_keeps_defaults(self):
+        """Web 端提交全部 69 项，行为不能变。"""
+        r = compute(build_demo_case())
+        self.assertEqual(r["summary"]["fact_total"], 1676500.0)
+
+    def test_strict_items_can_be_forced_off(self):
+        case = {
+            "strict_items": False,
+            "items": {"F1-01": {"params": {"p1": 10, "p2": 1000}}},
+        }
+        by = {i["code"]: i for i in compute(case)["items"]}
+        self.assertEqual(by["S3-01"]["assessed_loss"], 800000.0)
+
+    def test_strict_items_can_be_forced_on(self):
+        c = build_demo_case()
+        c["strict_items"] = True
+        # 全量提交 + 强制严格：显式写出的值仍然生效
+        self.assertEqual(compute(c)["summary"]["fact_total"], 1676500.0)
+
+    def test_empty_items_falls_back_to_defaults(self):
+        """完全不给 items 时走 catalog 默认，保持 /api/compute 空请求的老行为。"""
+        r = compute({"items": {}})
+        self.assertEqual(r["summary"]["fact_total"], 1676500.0)
+
+
+class TestInRowLimitContamination(unittest.TestCase):
+    """
+    坑④：保单参数漏进事实层。
+
+    结算层引入前，S3-01 的赎金分项限额、F8-01 的品牌修复分项限额是作为公式
+    变量写在行内的。填「支付 60 万、限额 50 万」，事实口径记的是 50 万——
+    事实层被保单参数污染。限额裁剪现在由第③层负责，行内限额属重复建模。
+    """
+
+    def test_ransom_inrow_limit_warns(self):
+        r = compute({
+            "policy_id": "cosco-emergency-service",
+            "coverage_mode": "policy",
+            "categories": {"S3": {"switch": "ON"}},
+            "items": {"S3-01": {"params": {"p1": 600000, "p2": 500000}}},
+        })
+        self.assertTrue(any("S3-01" in w and "污染" in w for w in r["warnings"]))
+        by = {i["code"]: i for i in r["items"]}
+        self.assertEqual(by["S3-01"]["assessed_loss"], 500000.0)  # 被污染的结果
+
+    def test_blank_inrow_limit_records_actual_amount(self):
+        r = compute({
+            "policy_id": "cosco-emergency-service",
+            "coverage_mode": "policy",
+            "categories": {"S3": {"switch": "ON"}},
+            "items": {"S3-01": {"params": {"p1": 600000}}},
+        })
+        self.assertFalse(any("污染" in w for w in r["warnings"]))
+        by = {i["code"]: i for i in r["items"]}
+        self.assertEqual(by["S3-01"]["assessed_loss"], 600000.0)
+
+    def test_no_warning_without_policy(self):
+        r = compute({
+            "categories": {"S3": {"switch": "ON"}},
+            "items": {"S3-01": {"params": {"p1": 600000, "p2": 500000}}},
+        })
+        self.assertFalse(any("污染" in w for w in r["warnings"]))
+
+
+class TestCase01Counterfactual(unittest.TestCase):
+    """CASE-01 与 CASE-01B 构成受控对比：唯一差异是赎金。"""
+
+    def test_ransom_does_not_change_payout(self):
+        a = compute(case_io.strip_to_compute(case_io.load_case("case-01-cosco-ransomware")))
+        b = compute(case_io.strip_to_compute(case_io.load_case("case-01b-cosco-ransom-paid")))
+        # 事实口径相差正好一笔赎金
+        self.assertEqual(
+            b["summary"]["fact_total"] - a["summary"]["fact_total"], 600000.0
+        )
+        # 计入金额与赔付额完全不变——这就是「名义承保」的量化落差
+        self.assertEqual(b["summary"]["covered_total"], a["summary"]["covered_total"])
+        self.assertEqual(b["settlement"]["payable"], a["settlement"]["payable"])
+        self.assertLess(
+            b["settlement"]["payout_ratio_vs_fact"],
+            a["settlement"]["payout_ratio_vs_fact"],
+        )
+
+    def test_ransom_is_nominal_only(self):
+        r = compute(case_io.strip_to_compute(case_io.load_case("case-01b-cosco-ransom-paid")))
+        by = {i["code"]: i for i in r["items"]}
+        self.assertEqual(by["S3-01"]["coverage_status"], "nominal_only")
+        self.assertEqual(by["S3-01"]["assessed_loss"], 600000.0)
+        self.assertEqual(by["S3-01"]["effective_covered"], 0.0)
+
+    def test_business_interruption_entirely_unmapped(self):
+        r = compute(case_io.strip_to_compute(case_io.load_case("case-01-cosco-ransomware")))
+        by = {i["code"]: i for i in r["items"]}
+        self.assertEqual(by["S1-01"]["coverage_status"], "unmapped")
+        self.assertEqual(by["S1-01"]["assessed_loss"], 1134000.0)
+        self.assertEqual(r["settlement"]["bi"]["gross"], 0.0)
+
+    def test_conditional_deductible_triggered(self):
+        r = compute(case_io.strip_to_compute(case_io.load_case("case-01-cosco-ransomware")))
+        self.assertEqual(r["settlement"]["deductible_amount"], 110000.0)
+        self.assertTrue(r["settlement"]["conditional_notes"])
+
+
 class TestCaseIO(unittest.TestCase):
     def test_safe_name_rejects_traversal(self):
         for bad in ["../etc/passwd", "a/b", "", "案例", "a b"]:

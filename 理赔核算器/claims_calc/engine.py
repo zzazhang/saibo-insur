@@ -94,14 +94,25 @@ def compute(case: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         warnings.append("coverage_mode 为 policy 但未指定保单，已回退为 manual")
         coverage_mode = "manual"
 
-    extras = {"s1_method": s1_method}
+    # ---- 参数默认值策略 ---------------------------------------------------
+    # catalog 里的 default 是给 Web 端预填演示数据用的（如 S3-01 赎金 80 万）。
+    # 案例文件是「已写明的事实」，没写的科目必须记 0，否则会静默继承演示值——
+    # 一个说明「未支付赎金」的案子会凭空多出 80 万核定损失，且从结果上看不出来。
+    # 因此：case 显式给出 items 时默认走严格模式；Web 端的 build_demo_case 会
+    # 提交全部 69 项，不受影响。可用 strict_items 显式覆盖。
     raw_items = case.get("items") or {}
+    strict_items = case.get("strict_items")
+    if strict_items is None:
+        strict_items = bool(raw_items) and len(raw_items) < len(catalog["items"])
+
+    extras = {"s1_method": s1_method}
     item_results: List[Dict[str, Any]] = []
     by_code: Dict[str, Dict[str, Any]] = {}
 
     for meta in catalog["items"]:
         code = meta["code"]
         item_input = raw_items.get(code) or {}
+        declared = code in raw_items
         # 合并：缺省用 catalog 默认，便于部分提交
         merged = {
             "params": {},
@@ -109,7 +120,12 @@ def compute(case: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
             "include": meta.get("include_default", "ON"),
         }
         for p in meta.get("params") or []:
-            merged["params"][p["key"]] = p.get("default")
+            if strict_items and not declared:
+                merged["params"][p["key"]] = None
+            else:
+                merged["params"][p["key"]] = p.get("default")
+        if strict_items and not declared:
+            merged["voucher"] = None
         if item_input.get("params"):
             merged["params"].update(item_input["params"])
         if "voucher" in item_input:
@@ -231,6 +247,31 @@ def compute(case: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
             "coverage_stats": policies.coverage_stats(cov_map),
             "settlement_notes": policy.get("settlement_notes") or [],
         }
+
+    # ---- 保单参数漏进事实层的检查 ----------------------------------------
+    # 结算层引入前，S3-01 的赎金分项限额、F8-01 的品牌修复分项限额是作为公式
+    # 变量写在行内的，事实层因此被保单参数污染：填「支付 60 万、限额 50 万」，
+    # 核定损失记的是 50 万，而不是实际支付的 60 万。
+    # 现在限额裁剪已由第③层负责，行内限额属于重复建模，须留空。
+    if policy:
+        _INROW_LIMITS = {
+            "S3-01": ("p2", "赎金分项限额"),
+            "F8-01": ("p3", "品牌修复分项限额"),
+        }
+        _sublimit_patterns = []
+        for sl in ((policy.get("settlement") or {}).get("sublimits") or []):
+            _sublimit_patterns.extend(sl.get("items") or [])
+        for _code, (_key, _label) in _INROW_LIMITS.items():
+            _entry = raw_items.get(_code) or {}
+            _val = coerce.to_number(
+                (_entry.get("params") or {}).get(_key), "%s.%s" % (_code, _key), []
+            )
+            if _val > 0 and settlement.match_any(_code, _sublimit_patterns):
+                warnings.append(
+                    "%s 行内填写了「%s」%s，但所选保单已在结算层为该科目设有分项限额；"
+                    "行内限额会污染事实口径（核定损失记成限额而非实际发生额），请留空"
+                    % (_code, _label, format(_val, ",.0f"))
+                )
 
     labels = {
         "column_headers": catalog.get("column_headers") or {},

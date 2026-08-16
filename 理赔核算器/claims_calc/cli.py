@@ -233,9 +233,91 @@ def render_summary(rows: List[Dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+def render_mapping(policy: Dict[str, Any], catalog: Dict[str, Any]) -> str:
+    """
+    导出某保单的 69 项完整条款责任对应表——案例流程第二步的交付物。
+    报告里只显示已填科目，这里是全量，含未触发的科目，便于核对承保边界。
+    """
+    cov = pol.build_coverage_map(policy, catalog)
+    stats = pol.coverage_stats(cov)
+    cat_names = {c["code"]: c["name"] for c in catalog["categories"]}
+
+    lines = ["# %s — 条款责任对应表" % policy.get("name"), ""]
+    lines.append("| 项目 | 内容 |")
+    lines.append("| --- | --- |")
+    lines.append("| 承保人 | %s |" % (policy.get("insurer") or "—"))
+    lines.append("| 产品类型 | %s |" % (policy.get("product_type") or "—"))
+    lines.append("| 条款来源 | %s |" % (policy.get("source_file") or "—"))
+    lines.append("")
+    if policy.get("summary"):
+        lines.append("> %s" % policy["summary"])
+        lines.append("")
+
+    lines.append("## 承保状态分布")
+    lines.append("")
+    lines.append("| 状态 | 科目数 | 占比 |")
+    lines.append("| --- | ---: | ---: |")
+    total = len(cov)
+    for key in ("covered", "limited", "conditional", "excluded", "nominal_only", "unmapped"):
+        n = stats.get(key, 0)
+        if not n:
+            continue
+        lines.append("| %s | %d | %.1f%% |"
+                     % (pol.STATUS_LABELS.get(key, key), n, n * 100.0 / total))
+    incl = sum(stats.get(k, 0) for k in pol.INCLUDING_STATUSES)
+    lines.append("| **合计可计入** | **%d** | **%.1f%%** |" % (incl, incl * 100.0 / total))
+    lines.append("")
+    lines.append("> 「可计入」只表示该科目属于本保单责任范围，"
+                 "不等于全额赔付——实际赔付额还要经分项限额、免赔额与累计限额裁剪。")
+    lines.append("")
+
+    lines.append("## 逐项对应")
+    lines.append("")
+    current = None
+    for meta in catalog["items"]:
+        c = cov[meta["code"]]
+        if c["category"] != current:
+            current = c["category"]
+            lines.append("")
+            lines.append("### %s %s" % (current, cat_names.get(current, "")))
+            lines.append("")
+            lines.append("| 编号 | 标准科目 | 承保判定 | 条款依据 | 说明 |")
+            lines.append("| --- | --- | --- | --- | --- |")
+        lines.append("| %s | %s | %s | %s | %s |" % (
+            c["code"], c["name"], c["status_label"],
+            c["clause"] or "—", c["note"] or "—"))
+    lines.append("")
+
+    notes = policy.get("settlement_notes") or []
+    if notes:
+        lines.append("## 结算结构说明")
+        lines.append("")
+        for n in notes:
+            lines.append("- %s" % n)
+        lines.append("")
+    return "\n".join(lines)
+
+
 # --------------------------------------------------------------------------
 # 子命令
 # --------------------------------------------------------------------------
+
+def cmd_mapping(args: argparse.Namespace) -> int:
+    catalog = get_catalog()
+    policy = pol.get_policy(args.policy)
+    if not policy:
+        print("未找到保单：%s" % args.policy)
+        return 1
+    text = render_mapping(policy, catalog)
+    if args.out:
+        os.makedirs(os.path.dirname(os.path.abspath(args.out)) or ".", exist_ok=True)
+        with open(args.out, "w", encoding="utf-8") as f:
+            f.write(text)
+        print("→ %s" % args.out)
+    else:
+        print(text)
+    return 0
+
 
 def cmd_list(args: argparse.Namespace) -> int:
     print("保单库（%s 款）：\n" % len(pol.list_policies()))
@@ -370,6 +452,11 @@ def main(argv: List[str] = None) -> int:
     p_val = sub.add_parser("validate", help="校验案例文件结构")
     p_val.add_argument("files", nargs="+")
     p_val.set_defaults(func=cmd_validate)
+
+    p_map = sub.add_parser("mapping", help="导出某保单的 69 项条款责任对应表")
+    p_map.add_argument("policy", help="保单 id")
+    p_map.add_argument("--out", help="输出 Markdown 文件")
+    p_map.set_defaults(func=cmd_mapping)
 
     p_run = sub.add_parser("run", help="批量跑案例")
     p_run.add_argument("files", nargs="+")

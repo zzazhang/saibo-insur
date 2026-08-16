@@ -74,6 +74,22 @@ Web 端按「案件与损失项 → 参数填写 → 结果报告」三步完成
 条件性免赔额（如中远海运第四条「隐患未整改则免赔额增加 10%」）通过
 `policy_flags` 触发。
 
+**坑④ 保单参数漏进事实层。** `S3-01` 的赎金分项限额、`F8-01` 的品牌修复分项限额
+是结算层引入前遗留的**行内公式变量**。填「支付 60 万、限额 50 万」，事实口径记的是
+50 万而非实际支付额——事实层被保单参数污染了。限额裁剪现在归第③层，这两个行内
+限额应留空；指定保单后若仍填了，引擎会告警。
+
+### 案例文件的「没写 = 没发生」
+
+`catalog.json` 里的 `default` 是给 Web 端预填演示数据用的（`S3-01` 赎金默认 80 万、
+`S1-01` 中断收入默认 32 万）。案例文件是**已写明的事实**，部分提交时未声明的科目
+必须记 0，否则一个写明「未支付赎金」的案子会凭空多出 80 万核定损失，而且从结果上
+完全看不出来。
+
+引擎据此自动选择模式：`items` 非空且少于 69 项 → 严格模式（未声明记 0）；
+全量提交或不给 `items` → 沿用 catalog 默认，Web 端行为不变。
+可用 `strict_items` 字段显式覆盖。
+
 ---
 
 ## 保单库
@@ -136,6 +152,7 @@ python tools/build_policies.py
 
 ```bash
 python -m claims_calc.cli list                          # 保单库
+python -m claims_calc.cli mapping <保单id> --out x.md    # 69 项条款责任对应表
 python -m claims_calc.cli validate cases/*.json         # 只校验结构
 python -m claims_calc.cli run cases/*.json              # 批量跑数
 python -m claims_calc.cli run cases/*.json --md out/    # 导出 Markdown 报告与结果 JSON
