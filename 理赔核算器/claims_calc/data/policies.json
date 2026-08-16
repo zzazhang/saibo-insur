@@ -988,6 +988,973 @@
         "第七条的安全服务赔付是「服务给付」而非现金报销：保险人直接派服务，在总服务限额内扣减使用。本配置把该组的 shares_aggregate 设为 false，使其不占用现金赔付的累计限额——这与其他保单的结构不同，案例中值得单独说明。",
         "第四条的条件免赔额通过 flags.unremediated_finding 触发。案例中若事故与已发现未整改的隐患有因果关系，务必打开该标记。"
       ]
+    },
+    {
+      "id": "guoshou-cyber-b",
+      "name": "中国人寿财产保险 网络安全保险条款 B",
+      "insurer": "中国人寿财产保险股份有限公司",
+      "product_type": "纯第一方网络安全损失保险",
+      "source_file": "国寿_网络安全保险条款B_AI结构化摘要.md",
+      "registration_no": "C00010830612020012322442",
+      "summary": "第一方四大模块：营业中断、网络勒索、数据修复、应急响应（含声誉危机）。完全不设第三者责任。条款第十五节把赔偿计算顺序写成显式步骤，第十四节采用「每次事故免赔额与免赔期间取高者」。",
+      "parameters_are_assumed": true,
+      "coverage": {
+        "default": "unmapped",
+        "categories": {
+          "F1": {
+            "status": "conditional",
+            "clause": "责任模块D 12.2 外部网络安全团队费用",
+            "note": "外聘第三方安全团队处置，原则上需保险人书面同意"
+          },
+          "F2": {
+            "status": "covered",
+            "clause": "责任模块C 数据修复费用",
+            "note": "恢复系统、移除恶意软件、重建数据的必要合理成本；允许包含向外部服务供应商分包的合理成本"
+          },
+          "F3": {
+            "status": "limited",
+            "clause": "责任模块D 12.2 / 第16.3节",
+            "note": "漏洞修复属应急响应费用，但性能提升部分明确除外"
+          },
+          "F4": {
+            "status": "covered",
+            "clause": "责任模块D 12.1 合规与咨询服务费用",
+            "note": "与政府部门沟通、网安法与个保法适用性判断、合规顾问咨询"
+          },
+          "F5": {
+            "status": "conditional",
+            "clause": "责任模块D 12.3 声誉危机处理费用",
+            "note": "**费用必须发生在保险事故发生后30日内**，超期原则上不属该项责任"
+          },
+          "S1": {
+            "status": "covered",
+            "clause": "责任模块A 营业中断损失"
+          },
+          "S4": {
+            "status": "covered",
+            "clause": "第6.4节 维持费用",
+            "note": "房租、员工工资、固定资产折旧等不随经营减少而减少的成本，属营业中断损失组成部分，金额由双方约定并载明"
+          }
+        },
+        "items": {
+          "F1-10": {
+            "status": "excluded",
+            "clause": "第18.7节 金融机构账户资金或资产损失"
+          },
+          "F2-11": {
+            "status": "excluded",
+            "clause": "第17.6节 有形设备自身损失或机械故障"
+          },
+          "F2-05": {
+            "status": "excluded",
+            "clause": "第11.4节 研发数据"
+          },
+          "F2-06": {
+            "status": "excluded",
+            "clause": "第11.5节 数据经济价值"
+          },
+          "F3-02": {
+            "status": "excluded",
+            "clause": "第11.1节 Betterment / 超额改进 / 第16.3节",
+            "note": "超过事故前状态的改进与性能提升明确除外"
+          },
+          "F3-03": {
+            "status": "limited",
+            "clause": "责任模块D 12.2 风险评估"
+          },
+          "F6": {
+            "status": "unmapped",
+            "clause": "—",
+            "note": "本条款未设独立的数据泄露通知费用责任"
+          },
+          "F8-01": {
+            "status": "unmapped",
+            "clause": "—",
+            "note": "声誉相关仅有应急响应项下的危机处理费用，无品牌价值修复责任"
+          },
+          "S1-02": {
+            "status": "limited",
+            "clause": "第3.2节 计算机系统范围 / 第19.1节",
+            "note": "书面委托的第三方代管系统可纳入保障；但外部服务商的欺诈、违法、故意、重大过失导致的损失除外"
+          },
+          "S2-01": {
+            "status": "excluded",
+            "clause": "第17.6节 / 第18.8节"
+          },
+          "S2-05": {
+            "status": "unmapped"
+          },
+          "S3-01": {
+            "status": "nominal_only",
+            "clause": "责任模块B 8.2 网络勒索赎金",
+            "note": "条款承保赎金，但同时要求「按照中国法律规定」且「经保险人书面同意」；模块B另要求及时通知公安机关。「按照中国法律规定」这一限定语在国内监管实践下使赎金实际不可赔"
+          },
+          "S3-02": {
+            "status": "conditional",
+            "clause": "责任模块B 8.3 网络勒索处理费用",
+            "note": "赎金不可赔不等于处理费用不可赔，二者须分列"
+          },
+          "R1": {
+            "status": "unmapped",
+            "clause": "第1.2节",
+            "note": "本条款明确未设置第三者数据泄露、隐私侵权、网络安全、媒体责任"
+          },
+          "R2": {
+            "status": "unmapped",
+            "clause": "第1.2节",
+            "note": "未设第三者诉讼法律辩护费用；与国寿财「网络安全责任保险」互补"
+          },
+          "R3": {
+            "status": "unmapped"
+          }
+        }
+      },
+      "settlement": {
+        "aggregate_limit": 8000000,
+        "deductible": {
+          "scope": "per_occurrence",
+          "amount": 150000
+        },
+        "bi": {
+          "items": [
+            "S1-01",
+            "S1-02",
+            "S1-03"
+          ],
+          "deductible_mode": "higher_of",
+          "deductible": 150000,
+          "max_indemnity_days": 120,
+          "clause": "第14.1节 每次事故免赔额与免赔期间同时存在时取较高者；第7节 赔偿期间自事故发生至网络及主要系统功能恢复正常，每日按24小时计"
+        },
+        "sublimits": [
+          {
+            "id": "SL-BI",
+            "name": "营业中断损失（含维持费用）",
+            "items": [
+              "S1",
+              "S4"
+            ],
+            "limit": 4000000,
+            "shares_aggregate": true,
+            "clause": "第13.1节 分项限额包含于累计限额内，非额外增加"
+          },
+          {
+            "id": "SL-EXT",
+            "name": "网络勒索事故",
+            "items": [
+              "S3"
+            ],
+            "limit": 1000000,
+            "shares_aggregate": true,
+            "clause": "第13节"
+          },
+          {
+            "id": "SL-DATA",
+            "name": "数据修复费用",
+            "items": [
+              "F2"
+            ],
+            "limit": 2000000,
+            "shares_aggregate": true,
+            "clause": "第13节"
+          },
+          {
+            "id": "SL-IR",
+            "name": "网络应急响应费用",
+            "items": [
+              "F1",
+              "F3",
+              "F4",
+              "F5",
+              "F7"
+            ],
+            "limit": 1500000,
+            "shares_aggregate": true,
+            "clause": "第13节"
+          }
+        ],
+        "conditional_deductible": []
+      },
+      "settlement_notes": [
+        "**营业中断口径换算约定**：本条款按小时计量、以净利润为基础，与本工具 S1-01 的公式外推法（按天、毛利率）不一致。经权衡决定不修改计算核心，改以填参约定表达：p1 填日均净利润额、p2 填中断小时数÷24、p3 填免赔期间小时数÷24、p4 固定填 1.0、p5 填 1−(实际净利润÷应得净利润)，维持费用记入 S4 并归入营业中断分项组。引用本保单的案例必须显式声明该约定，否则参数含义会被误读。",
+        "第15节把赔偿计算顺序写成了显式步骤：确定实际损失 → 扣分项免赔额 → 受分项限额限制 → 扣每次事故免赔额或免赔期间金额 → 受累计限额限制。这与本工具结算层的六步顺序一致，是该顺序的条款级印证。",
+        "第14.1节的「取高者」是本项目 higher_of 口径的第三个来源（另两个为苏黎世6.3、泰康第八条第四款），说明该机制是行业惯例而非个别设计。",
+        "声誉危机处理费用有30日时限（12.3节），是本保单库中唯一的费用发生期限制，案例中若公关费跨越30日须拆分。"
+      ]
+    },
+    {
+      "id": "guoshou-liability",
+      "name": "中国人寿财产保险 网络安全责任保险",
+      "insurer": "中国人寿财产保险股份有限公司",
+      "product_type": "纯第三者责任保险（索赔提出制）",
+      "source_file": "中国人寿财产保险网络安全责任保险_AI结构化摘要.md",
+      "registration_no": "C00010830912020061800432",
+      "summary": "只承保第三者责任与法律费用。数据恢复、系统修复、应急响应、赎金、营业中断、名誉恢复全部不属本产品保障范围。与同公司的《网络安全保险条款B》构成互补的一对：一个只赔别人的损失，一个只赔自己的。",
+      "parameters_are_assumed": true,
+      "coverage": {
+        "default": "unmapped",
+        "categories": {
+          "R1": {
+            "status": "covered",
+            "clause": "网络安全事故第三者责任 / 数字媒体责任",
+            "note": "因恶意软件、黑客入侵、拒绝服务攻击、非法使用或访问导致第三者经济损失；含数字媒体内容疏忽或一般过失"
+          },
+          "R2": {
+            "status": "conditional",
+            "clause": "法律费用",
+            "note": "仲裁、诉讼及经保险人书面同意的必要合理费用"
+          }
+        },
+        "items": {
+          "F1-01": {
+            "status": "excluded",
+            "clause": "责任总览：应急响应费用 明确除外"
+          },
+          "F2-01": {
+            "status": "excluded",
+            "clause": "责任总览：系统恢复/IT修复费用 明确除外",
+            "note": "条款明确将信息技术服务费用列为除外"
+          },
+          "F2-03": {
+            "status": "excluded",
+            "clause": "责任总览：数据恢复费用 未作为保险责任承保"
+          },
+          "F5-01": {
+            "status": "unmapped",
+            "clause": "责任总览：名誉恢复费用 未设置独立责任"
+          },
+          "S1-01": {
+            "status": "excluded",
+            "clause": "责任总览：交易及交易中断类损失明确除外",
+            "note": "未设置独立利润损失责任"
+          },
+          "S3-01": {
+            "status": "unmapped",
+            "clause": "责任总览：网络敲诈赎金 未列入保险责任",
+            "note": "本产品连名义承保都没有，与多数国内产品不同"
+          },
+          "R3-01": {
+            "status": "unmapped"
+          }
+        }
+      },
+      "settlement": {
+        "aggregate_limit": 10000000,
+        "deductible": {
+          "scope": "per_occurrence",
+          "amount": 100000
+        },
+        "bi": {
+          "items": [
+            "S1-01",
+            "S1-02",
+            "S1-03"
+          ],
+          "deductible_mode": "waiting_only",
+          "deductible": 0,
+          "clause": "本产品无营业中断责任，无免赔期与赔偿期间概念"
+        },
+        "sublimits": [
+          {
+            "id": "SL-LIAB",
+            "name": "第三者赔偿责任",
+            "items": [
+              "R1"
+            ],
+            "limit": 8000000,
+            "shares_aggregate": true
+          },
+          {
+            "id": "SL-LEGAL",
+            "name": "法律费用",
+            "items": [
+              "R2",
+              "F4"
+            ],
+            "limit": 2000000,
+            "shares_aggregate": true
+          }
+        ],
+        "conditional_deductible": []
+      },
+      "settlement_notes": [
+        "本产品为索赔提出制（claims-made）并设追溯期，与保单库中多数事故发生制产品不同。案例中须同时核对「事故发生在追溯期后」与「索赔在保险期间内提出」两个时点，本结算层不对时效建模，须在程序性合规检查中单独核对。",
+        "与 guoshou-cyber-b 是同一保险人的互补产品。企业若只买其一，出险后缺口位置完全不同——这是本保单库中最有教学价值的一组对照。"
+      ]
+    },
+    {
+      "id": "sunshine-2016",
+      "name": "阳光财产保险 网络安全综合保险（2016版）",
+      "insurer": "阳光财产保险股份有限公司",
+      "product_type": "模块化综合险（六模块可选投）",
+      "source_file": "阳光网络安全综合保险条款2016_AI结构化摘要.md",
+      "summary": "六个模块可单选：1.1 数据恢复及其他费用、1.2 网络敲诈、1.3 名誉损失、1.4 利润损失、2.1 数据保密责任、法律费用。承保结果高度依赖保单实际勾选了哪些模块——这是本保单库中唯一「买什么才保什么」的产品，缺口可能来自销售环节而非条款设计。",
+      "parameters_are_assumed": true,
+      "modular": true,
+      "modules": {
+        "1.1": {
+          "name": "数据恢复及其他费用损失保险",
+          "items": [
+            "F1",
+            "F2",
+            "F3",
+            "F6",
+            "F7"
+          ]
+        },
+        "1.2": {
+          "name": "网络敲诈损失保险",
+          "items": [
+            "S3"
+          ]
+        },
+        "1.3": {
+          "name": "名誉损失补偿保险",
+          "items": [
+            "F5",
+            "F8"
+          ]
+        },
+        "1.4": {
+          "name": "利润损失保险",
+          "items": [
+            "S1",
+            "S4"
+          ]
+        },
+        "2.1": {
+          "name": "数据保密责任保险",
+          "items": [
+            "R1"
+          ]
+        },
+        "legal": {
+          "name": "法律费用",
+          "items": [
+            "R2",
+            "F4"
+          ]
+        }
+      },
+      "coverage": {
+        "default": "unmapped",
+        "categories": {
+          "F1": {
+            "status": "covered",
+            "clause": "模块1.1 第4.5节 调查费用"
+          },
+          "F2": {
+            "status": "covered",
+            "clause": "模块1.1 第4.2/4.3节 数据恢复及重置、系统恢复费用"
+          },
+          "F3": {
+            "status": "limited",
+            "clause": "模块1.1 第4.4节 / 第14.6节",
+            "note": "其他IT相关费用可涵盖修复，但超标准升级明确除外"
+          },
+          "F4": {
+            "status": "conditional",
+            "clause": "模块2.1 第8.4节 法律费用"
+          },
+          "F5": {
+            "status": "covered",
+            "clause": "模块1.3 第6.3节 媒体危机管理及广告宣传费用"
+          },
+          "F6": {
+            "status": "covered",
+            "clause": "模块1.1 第4.6节 通知费用"
+          },
+          "F7": {
+            "status": "covered",
+            "clause": "模块1.1 第4.4节 其他IT相关费用"
+          },
+          "S1": {
+            "status": "covered",
+            "clause": "模块1.4 第7.2/7.3节 净利润损失及固定费用"
+          },
+          "S4": {
+            "status": "covered",
+            "clause": "模块1.4 第7.4/7.5节 固定费用、额外费用"
+          },
+          "R1": {
+            "status": "covered",
+            "clause": "模块2.1 数据保密责任",
+            "note": "第三者机密信息损坏、丢失、盗窃、泄露责任"
+          },
+          "R2": {
+            "status": "conditional",
+            "clause": "第8.4节 法律辩护费用"
+          }
+        },
+        "items": {
+          "F1-06": {
+            "status": "excluded",
+            "clause": "第12.1/12.2节 外包商自身损失、外包商转包"
+          },
+          "F1-10": {
+            "status": "excluded",
+            "clause": "第14.1节 金融交易和贸易损失"
+          },
+          "F2-11": {
+            "status": "excluded",
+            "clause": "第13.4/13.5节 硬件本身丢失盗抢、正常磨损"
+          },
+          "F3-02": {
+            "status": "excluded",
+            "clause": "第14.6节 超标准升级"
+          },
+          "F8-01": {
+            "status": "limited",
+            "clause": "模块1.3 第6.3节",
+            "note": "条款口径为媒体危机管理与广告宣传费用，与本模型的品牌价值降幅法不一致，须按费用实报口径重算"
+          },
+          "S1-02": {
+            "status": "excluded",
+            "clause": "第13.2节 第三方基础设施/服务故障除外"
+          },
+          "S1-03": {
+            "status": "limited",
+            "clause": "第7.9节 审计费用 / 第7.7节 不足额保险比例赔偿",
+            "note": "条款设有比例赔偿机制，不足额投保时按比例赔付，本结算层未建模该机制，案例中须单独说明"
+          },
+          "S2-01": {
+            "status": "excluded",
+            "clause": "第13.4节"
+          },
+          "S2-05": {
+            "status": "unmapped"
+          },
+          "S3-01": {
+            "status": "nominal_only",
+            "clause": "模块1.2 第5.2节 / 第14.4节",
+            "note": "第14.4节原则上赎金不赔，仅在投保模块1.2时例外承保；且须事先经保险人书面同意、并及时通知公安机关。通知公安与支付赎金在国内实践中互斥，实际不可赔。另需注意：未投保模块1.2 时连名义承保都不存在"
+          },
+          "R1-06": {
+            "status": "excluded",
+            "clause": "第10.13节 商业合同暂停/取消/失效"
+          },
+          "R3-01": {
+            "status": "unmapped"
+          }
+        }
+      },
+      "settlement": {
+        "aggregate_limit": 6000000,
+        "deductible": {
+          "scope": "per_occurrence",
+          "amount": 80000
+        },
+        "bi": {
+          "items": [
+            "S1-01",
+            "S1-02",
+            "S1-03"
+          ],
+          "deductible_mode": "higher_of",
+          "deductible": 80000,
+          "max_indemnity_days": 180,
+          "clause": "第16.3节 免赔额与按免赔率计算金额取高者；第7.6节 赔偿期间"
+        },
+        "sublimits": [
+          {
+            "id": "SL-M11",
+            "name": "模块1.1 数据恢复及其他费用",
+            "items": [
+              "F1",
+              "F2",
+              "F3",
+              "F6",
+              "F7"
+            ],
+            "limit": 2000000,
+            "shares_aggregate": true,
+            "clause": "第16.2节"
+          },
+          {
+            "id": "SL-M12",
+            "name": "模块1.2 网络敲诈",
+            "items": [
+              "S3"
+            ],
+            "limit": 800000,
+            "shares_aggregate": true,
+            "clause": "第16.2节"
+          },
+          {
+            "id": "SL-M13",
+            "name": "模块1.3 名誉损失",
+            "items": [
+              "F5",
+              "F8"
+            ],
+            "limit": 800000,
+            "shares_aggregate": true,
+            "clause": "第16.2节"
+          },
+          {
+            "id": "SL-M14",
+            "name": "模块1.4 利润损失",
+            "items": [
+              "S1",
+              "S4"
+            ],
+            "limit": 3000000,
+            "shares_aggregate": true,
+            "clause": "第16.1节"
+          },
+          {
+            "id": "SL-M21",
+            "name": "模块2.1 数据保密责任及法律费用",
+            "items": [
+              "R1",
+              "R2",
+              "F4"
+            ],
+            "limit": 3000000,
+            "shares_aggregate": true,
+            "clause": "第16.2节"
+          }
+        ],
+        "conditional_deductible": []
+      },
+      "settlement_notes": [
+        "**模块化是本产品的核心特征**：投保人可只选部分模块，未投保模块的损失完全不赔。本配置默认全部模块均已投保；若案例要演示「只买了部分模块」的缺口，应在案例中用 include_override 关闭对应科目，并在案情中说明未投保哪些模块。这类缺口来自销售环节而非条款设计，是国内市场特有的问题。",
+        "第7.7节设有不足额保险的比例赔偿机制（利润损失保险金额低于应保金额时按比例赔付），本结算层未建模，案例中若涉及须单独说明。",
+        "第15节的事故聚合规则（模块1.1与1.2合并计为一次事故）本结算层未建模，多起关联事故的案例须人工判断是否合并。"
+      ]
+    },
+    {
+      "id": "allianz-ecommerce",
+      "name": "安联财产保险 电子商务和信息安全保障责任保险",
+      "insurer": "安联财产保险（中国）",
+      "product_type": "综合型（第三方责任 + 营业中断 + 危机管理 + 第一方损失）",
+      "source_file": "05_安联财产保险电子商务和信息安全保障责任保险_analysis.md",
+      "summary": "承保面最宽的一款。关键差异点：明确承保**外包服务提供商**造成的泄密（与平安B款、阳光的除外形成正面对照）；承保工业控制系统扩展、人为错误与技术故障引发的营业中断、以及为遵守监管命令主动关停造成的中断。",
+      "parameters_are_assumed": true,
+      "coverage": {
+        "default": "unmapped",
+        "categories": {
+          "F1": {
+            "status": "covered",
+            "clause": "第二部分C项第一款 应急危机调查费用",
+            "note": "IT专家分析查明是否发生、起因、程度及如何减轻损失"
+          },
+          "F2": {
+            "status": "covered",
+            "clause": "第三部分第五项 修复费用",
+            "note": "将系统恢复至事故前功能水平、恢复读取重装数据或软件"
+          },
+          "F3": {
+            "status": "limited",
+            "clause": "第三部分第六项 改进费用",
+            "note": "纠正根本起因的升级改进费用，适用分项限额，须事先书面同意"
+          },
+          "F4": {
+            "status": "conditional",
+            "clause": "第二部分C项第二款",
+            "note": "泄露应对费用含法律监管建议，须事先书面同意"
+          },
+          "F5": {
+            "status": "conditional",
+            "clause": "第二部分C项第四款 名誉保护费用",
+            "note": "适用分项限额，须事先同意"
+          },
+          "F6": {
+            "status": "covered",
+            "clause": "第二部分C项第二款",
+            "note": "含消费者通知、呼叫中心、账户与信用监测（最长十二个月）"
+          },
+          "F7": {
+            "status": "covered",
+            "clause": "第三部分第三、四项 减轻损失费用"
+          },
+          "S1": {
+            "status": "covered",
+            "clause": "第二部分B项 营业中断损失",
+            "note": "税前净经营利润减少及持续消耗的固定成本"
+          },
+          "S4": {
+            "status": "covered",
+            "clause": "第二部分B项 / 第三部分第三、四项"
+          },
+          "R1": {
+            "status": "covered",
+            "clause": "第二部分A项 侵犯隐私、机密泄露、网络安全索赔"
+          },
+          "R2": {
+            "status": "conditional",
+            "clause": "第二部分A项 抗辩费用",
+            "note": "须经事先书面同意"
+          }
+        },
+        "items": {
+          "F1-06": {
+            "status": "covered",
+            "clause": "第二部分A项 及 第四部分定义",
+            "note": "**承保对外包服务提供商提出的侵犯隐私与机密泄露索赔**，与平安B款第十六条第六款、阳光第12节的除外形成正面对照"
+          },
+          "S1-02": {
+            "status": "covered",
+            "clause": "第三部分第九、十项",
+            "note": "承保人为错误或技术故障引发的营业中断，以及为遵守监管命令主动关停系统造成的中断"
+          },
+          "F1-10": {
+            "status": "covered",
+            "clause": "第二部分D项第一款 黑客盗窃资金损失",
+            "note": "承保第三方网络攻击导致被保险人支付本不应支付的资金，适用分项限额"
+          },
+          "F1-11": {
+            "status": "limited",
+            "clause": "第三部分第二项 紧急费用",
+            "note": "允许事后批准追认的应急支出，适用分项限额"
+          },
+          "F2-11": {
+            "status": "excluded",
+            "clause": "通用除外：人身伤害和财产损失",
+            "note": "数据和软件不属于有形财产，但有形财产损失除外"
+          },
+          "F3-05": {
+            "status": "excluded",
+            "clause": "通用除外：商业秘密及知识产权"
+          },
+          "F8-01": {
+            "status": "limited",
+            "clause": "第二部分C项第四款",
+            "note": "条款口径为名誉保护的公关顾问费用，与本模型的品牌价值降幅法不一致，须按费用实报口径重算"
+          },
+          "S2-01": {
+            "status": "excluded",
+            "clause": "通用除外：人身伤害和财产损失"
+          },
+          "S2-05": {
+            "status": "unmapped"
+          },
+          "S3-01": {
+            "status": "nominal_only",
+            "clause": "第二部分D项第二款 网络敲诈损失",
+            "note": "条款承保为解除威胁实际支付的钱款与数字货币，但须经保险人事先书面同意；国内监管实践下赎金不可赔"
+          },
+          "S3-02": {
+            "status": "conditional",
+            "clause": "第二部分D项第二款",
+            "note": "聘请安全专家协助的技术费与赎金须分列"
+          },
+          "R1-06": {
+            "status": "excluded",
+            "clause": "通用除外：合同责任",
+            "note": "但PCI与保密协议项下的责任不适用该除外"
+          },
+          "R3-01": {
+            "status": "covered",
+            "clause": "第二部分A项 PCI-DSS 责任",
+            "note": "承保卡组织罚金、抗辩费用及合同约定罚金，适用分项限额"
+          },
+          "R3-02": {
+            "status": "limited",
+            "clause": "第二部分A项"
+          }
+        }
+      },
+      "settlement": {
+        "aggregate_limit": 15000000,
+        "deductible": {
+          "scope": "per_occurrence",
+          "amount": 150000
+        },
+        "bi": {
+          "items": [
+            "S1-01",
+            "S1-02",
+            "S1-03"
+          ],
+          "deductible_mode": "waiting_only",
+          "deductible": 0,
+          "max_indemnity_days": 180,
+          "clause": "第二部分B项 等待期以小时计，营业中断损失含等待期内损失；第四部分定义 赔偿期间自首次发生起最长180天"
+        },
+        "sublimits": [
+          {
+            "id": "SL-CRISIS",
+            "name": "危机管理费用",
+            "items": [
+              "F1",
+              "F5",
+              "F6",
+              "F7"
+            ],
+            "limit": 4000000,
+            "shares_aggregate": true,
+            "clause": "明细表第六项"
+          },
+          {
+            "id": "SL-REPAIR",
+            "name": "修复与改进费用",
+            "items": [
+              "F2",
+              "F3"
+            ],
+            "limit": 3000000,
+            "shares_aggregate": true,
+            "clause": "第三部分第五、六项"
+          },
+          {
+            "id": "SL-BI",
+            "name": "营业中断损失",
+            "items": [
+              "S1",
+              "S4"
+            ],
+            "limit": 6000000,
+            "shares_aggregate": true,
+            "clause": "第二部分B项"
+          },
+          {
+            "id": "SL-EXT",
+            "name": "网络敲诈与黑客盗窃",
+            "items": [
+              "S3"
+            ],
+            "limit": 1500000,
+            "shares_aggregate": true,
+            "clause": "第二部分D项"
+          },
+          {
+            "id": "SL-LIAB",
+            "name": "第三方责任与抗辩",
+            "items": [
+              "R1",
+              "R2",
+              "F4"
+            ],
+            "limit": 10000000,
+            "shares_aggregate": true,
+            "clause": "明细表第六项"
+          },
+          {
+            "id": "SL-PCI",
+            "name": "PCI-DSS 责任",
+            "items": [
+              "R3"
+            ],
+            "limit": 2000000,
+            "shares_aggregate": true,
+            "clause": "第二部分A项"
+          }
+        ],
+        "conditional_deductible": []
+      },
+      "settlement_notes": [
+        "**外包商责任是本保单的标志性差异**：第二部分A项明确承保「对被保险人**或外包服务提供商**提出的侵犯隐私行为和机密泄露行为的索赔」。平安B款第十六条第六款、阳光第12节均将外包商相关损失除外。同一场外包商泄密事故，在这三款保单下的结果截然不同——建议做成对照案。",
+        "明细表第六项载明各项分项限额「构成累计责任限额一部分」，故全部分项组 shares_aggregate 均为 true，与苏黎世 5.3 结构相同。",
+        "营业中断的等待期以小时计，且条款明确「包含等待期内损失」——这与多数保单「扣除等待期」的做法相反，是罕见的宽口径设计。本配置按 waiting_only 处理，案例中 S1-01 的 p3 等待期应填 0 以体现该特点。",
+        "第三部分第十项承保「为遵守监管命令或数据保护法强制规定而主动关停系统」造成的营业中断——国内监管要求企业配合调查时暂停服务的情形可直接适用，是本保单库中少见的、与国内监管实践直接契合的条款设计。"
+      ]
+    },
+    {
+      "id": "chubb-cyber-erm",
+      "name": "安达 企业网络风险管理保险",
+      "insurer": "安达保险（中国）",
+      "product_type": "综合型（三大责任 + 第一方损失 + 扩展责任）",
+      "source_file": "02_安达企业网络风险管理保险_analysis.md",
+      "summary": "外资在华综合型产品。核心观察点是「监管程序罚金」：条款把行政罚款写入损害赔偿范围，但加了「在法律和赔偿支付地允许承保的前提下」这一限定语——与赎金条款的「在中国法律允许范围内」是同构句式。国内行政罚款依法不可保，故该项判定为名义承保、实际不可赔。",
+      "parameters_are_assumed": true,
+      "coverage": {
+        "default": "unmapped",
+        "categories": {
+          "F1": {
+            "status": "covered",
+            "clause": "第一条第一、二、三款及第三条第十七款 应急响应费用",
+            "note": "第三方计算机取证公司确定网络安全失效原因和范围"
+          },
+          "F2": {
+            "status": "covered",
+            "clause": "第一条第五款 数据损失修复费用",
+            "note": "移除恶意软件、事故后重建数据"
+          },
+          "F3": {
+            "status": "limited",
+            "clause": "第二条第六款 改进费用",
+            "note": "纠正根本起因的升级改进，属事件后紧急漏洞修补与加固"
+          },
+          "F4": {
+            "status": "conditional",
+            "clause": "第三条第十七款",
+            "note": "应急响应费用含法律与合规顾问，须事先书面同意"
+          },
+          "F5": {
+            "status": "conditional",
+            "clause": "第三条第十七款 危机公关"
+          },
+          "F6": {
+            "status": "covered",
+            "clause": "第三条第十七款 / 第二条第七款",
+            "note": "遵守个人信息保护法规通知消费者、信用监测；另有自愿通知费用扩展"
+          },
+          "F7": {
+            "status": "covered",
+            "clause": "第二条第三、四款 减轻损失费用"
+          },
+          "S1": {
+            "status": "covered",
+            "clause": "第一条第六款 营业中断损失",
+            "note": "赔偿期内直接导致的税前净利润减少"
+          },
+          "S4": {
+            "status": "covered",
+            "clause": "第一条第六款 营业中断修复费用",
+            "note": "含借用外部设备、持续经营替代方案、劳动力成本增加"
+          },
+          "R1": {
+            "status": "covered",
+            "clause": "第一条第一、二、三款 保密/网络安全/媒体责任"
+          },
+          "R2": {
+            "status": "conditional",
+            "clause": "第三条第十四款 赔偿请求费用",
+            "note": "律师费、专家证人费；须经保险人事先书面同意"
+          }
+        },
+        "items": {
+          "F1-06": {
+            "status": "covered",
+            "clause": "第一条第一款 / 第三条第四十二款",
+            "note": "外包服务供应商在履行外包合同时导致泄露，保险人对首次提出的索赔承担赔付"
+          },
+          "F1-10": {
+            "status": "unmapped"
+          },
+          "F2-11": {
+            "status": "excluded",
+            "clause": "第四条 责任免除"
+          },
+          "F3-05": {
+            "status": "excluded",
+            "clause": "第四条 商业秘密及知识产权"
+          },
+          "F8-01": {
+            "status": "unmapped",
+            "clause": "—",
+            "note": "无独立的品牌价值修复责任，声誉相关仅在应急响应费用项下"
+          },
+          "S1-02": {
+            "status": "covered",
+            "clause": "第二条第九款",
+            "note": "承保人为错误或技术故障（静电、升级失败、软件错误等）引发的营业中断"
+          },
+          "S2-01": {
+            "status": "excluded",
+            "clause": "第四条 责任免除"
+          },
+          "S2-05": {
+            "status": "unmapped"
+          },
+          "S3-01": {
+            "status": "nominal_only",
+            "clause": "第一条第四款 网络勒索损害赔偿",
+            "note": "须经保险人事先书面同意；国内监管实践下赎金不可赔"
+          },
+          "S3-02": {
+            "status": "conditional",
+            "clause": "第一条第四款 网络勒索费用",
+            "note": "IT顾问、公关顾问、法律合规顾问、危机谈判专家费用"
+          },
+          "R1-04": {
+            "status": "nominal_only",
+            "clause": "第三条第九、三十八款 监管程序罚金",
+            "note": "条款将监管机构作出的金钱性质罚款和处罚写入损害赔偿范围，但附「**在法律和赔偿支付地允许承保的前提下**」这一限定语。该句式与赎金条款的「在中国法律允许范围内」同构。我国行政处罚具有人身与财产制裁属性，依法不得通过保险转嫁，故该项在境内判定为名义承保、实际不可赔"
+          },
+          "R1-06": {
+            "status": "excluded",
+            "clause": "第四条 合同责任除外"
+          },
+          "R3-01": {
+            "status": "unmapped"
+          }
+        }
+      },
+      "settlement": {
+        "aggregate_limit": 12000000,
+        "deductible": {
+          "scope": "per_occurrence",
+          "amount": 120000
+        },
+        "bi": {
+          "items": [
+            "S1-01",
+            "S1-02",
+            "S1-03"
+          ],
+          "deductible_mode": "waiting_only",
+          "deductible": 0,
+          "max_indemnity_days": 90,
+          "clause": "第三条第十一款 等待期以小时计，代替固定免赔额用于营业中断；第一条第六款E项 赔偿期自等待期届满后起算，最长不超过三个月"
+        },
+        "sublimits": [
+          {
+            "id": "SL-IR",
+            "name": "应急响应费用",
+            "items": [
+              "F1",
+              "F4",
+              "F5",
+              "F6",
+              "F7"
+            ],
+            "limit": 3000000,
+            "shares_aggregate": true,
+            "clause": "明细表第六项"
+          },
+          {
+            "id": "SL-DATA",
+            "name": "数据修复与改进费用",
+            "items": [
+              "F2",
+              "F3"
+            ],
+            "limit": 2500000,
+            "shares_aggregate": true,
+            "clause": "第一条第五款 / 第二条第六款"
+          },
+          {
+            "id": "SL-BI",
+            "name": "营业中断损失及修复费用",
+            "items": [
+              "S1",
+              "S4"
+            ],
+            "limit": 4000000,
+            "shares_aggregate": true,
+            "clause": "第一条第六款"
+          },
+          {
+            "id": "SL-EXT",
+            "name": "网络勒索",
+            "items": [
+              "S3"
+            ],
+            "limit": 1000000,
+            "shares_aggregate": true,
+            "clause": "第一条第四款 / 明细表第六项"
+          },
+          {
+            "id": "SL-LIAB",
+            "name": "三大责任与抗辩费用",
+            "items": [
+              "R1",
+              "R2"
+            ],
+            "limit": 8000000,
+            "shares_aggregate": true,
+            "clause": "一般条件第五条第四款E项"
+          }
+        ],
+        "conditional_deductible": []
+      },
+      "settlement_notes": [
+        "**监管罚款是本保单的标志性观察点**：条款把行政罚款写入损害赔偿范围，但加了「在法律和赔偿支付地允许承保的前提下」。这与赎金条款的「在中国法律允许范围内」是同一种句式——国际条款移植入境时保留了本国不可执行的责任项，靠一句限定语把风险推回给投保人。本项目把这类情形统一标为 nominal_only，正是为了让这种落差在数字上显形。",
+        "营业中断的等待期以**小时**计（第三条第十一款），且明确「代替固定免赔额使用」——即等待期与免赔额是替代关系而非并列关系，本配置按 waiting_only 处理。案例中 S1-01 的 p3 应填「等待期小时数 ÷ 24」。",
+        "赔偿期自等待期届满后起算且不超过三个月（90天），是保单库中最短的赔偿期，对长周期恢复的事故（如工控系统重建）会形成显著缺口。"
+      ]
     }
   ]
 }
