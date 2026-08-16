@@ -153,5 +153,127 @@
         "p1": 600000
       }
     }
+  },
+  "param_sources": {
+    "F1-01.p2": {
+      "ref": "sec-service-rate-senior",
+      "note": "应急响应与专家服务按高级/专家级取值；国标单位为元/人日，此处 ÷8 折为元/小时"
+    },
+    "F1-02.p2": {
+      "ref": "sec-service-rate-senior",
+      "note": "取证鉴定按高级级别取值，折算方式同上"
+    },
+    "F2-01.p2": {
+      "ref": "sec-service-rate-mid",
+      "note": "系统恢复重建按中级级别取值"
+    },
+    "F2-02.p2": {
+      "ref": "sec-service-rate-mid",
+      "note": "恶意组件清理按中级级别取值"
+    },
+    "F2-04.p2": {
+      "ref": "sec-service-rate-mid",
+      "note": "备份重建按中级级别取值"
+    },
+    "F3-01.p4": {
+      "ref": "sec-service-rate-mid",
+      "note": "漏洞修补按中级级别取值"
+    },
+    "S1-01.p2": {
+      "ref": "ransomware-recovery-days",
+      "note": "中断 5 天，落在 Sophos 2025 分布的 16%~53% 之间（一日内 16%、一周内 53%），对备份卷影被删除的情形属偏快但合理"
+    },
+    "F1-01.p1": {
+      "ref": "editor-estimate",
+      "note": "响应工时 120h，按 5 天中断期内 3 人全程投入估算"
+    },
+    "F1-02.p1": {
+      "ref": "editor-estimate",
+      "note": "取证工时 80h"
+    },
+    "F1-03.p1": {
+      "ref": "editor-estimate",
+      "note": "镜像 24 个，对应被加密的服务器与数据库实例数"
+    },
+    "F1-03.p2": {
+      "ref": "editor-estimate",
+      "note": "镜像单价 1250 元/个"
+    },
+    "F2-01.p1": {
+      "ref": "editor-estimate",
+      "note": "系统恢复 320h"
+    },
+    "F2-02.p1": {
+      "ref": "editor-estimate",
+      "note": "清理 60h"
+    },
+    "F2-03.p1": {
+      "ref": "editor-estimate",
+      "note": "数据恢复量 1200GB"
+    },
+    "F2-03.p2": {
+      "ref": "editor-estimate",
+      "note": "数据恢复单价 100 元/GB"
+    },
+    "F2-04.p1": {
+      "ref": "editor-estimate",
+      "note": "备份重建 90h"
+    },
+    "F3-01.p1": {
+      "ref": "editor-estimate",
+      "note": "高危 CVE 8 个"
+    },
+    "F3-01.p2": {
+      "ref": "editor-estimate",
+      "note": "中危 CVE 15 个"
+    },
+    "F3-01.p3": {
+      "ref": "editor-estimate",
+      "note": "低危 CVE 24 个"
+    },
+    "F3-01.p5": {
+      "ref": "editor-estimate",
+      "note": "加急系数 1.5"
+    },
+    "F3-02": {
+      "ref": "editor-estimate",
+      "note": "加固费 18 万，含 RDP 改堡垒机跳转与多因素认证部署"
+    },
+    "F5-01": {
+      "ref": "editor-estimate",
+      "note": "公关服务费 15 万"
+    },
+    "F7-01": {
+      "ref": "editor-estimate",
+      "note": "应急防护费 6 万"
+    },
+    "S1-01.p1": {
+      "ref": "editor-estimate",
+      "note": "日均收入 180 万，按年营收 6.6 亿 ÷ 365 取整"
+    },
+    "S1-01.p4": {
+      "ref": "editor-estimate",
+      "note": "毛利率 18%，冷链物流行业量级设定，无样本支撑"
+    },
+    "S1-01.p5": {
+      "ref": "editor-estimate",
+      "note": "影响比例 70%，对应人工调度维持约三成运量"
+    },
+    "S2-01": {
+      "ref": "editor-estimate",
+      "note": "边缘服务器替换 8.5 万"
+    },
+    "S4-02.p1": {
+      "ref": "editor-estimate",
+      "note": "加班工资 12 万"
+    },
+    "S4-02.p2": {
+      "ref": "editor-estimate",
+      "note": "外包运力 8 万"
+    },
+    "S3-01.p1": {
+      "ref": "ransom-payment-refusal-rate",
+      "note": "反事实假设值 60 万元。Sophos 2025 显示 63% 的受害组织拒付赎金，本案的真实情形（CASE-01，未支付）属多数；本案为对照假设，金额按攻击者索要额设定，非实际支付"
+    }
   }
 }

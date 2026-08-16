@@ -25,6 +25,7 @@ if _ROOT not in sys.path:
 
 from claims_calc import cases as case_io  # noqa: E402
 from claims_calc import policies as pol  # noqa: E402
+from claims_calc import sources as src  # noqa: E402
 from claims_calc.engine import compute, get_catalog  # noqa: E402
 
 
@@ -191,8 +192,63 @@ def render_markdown(case: Dict[str, Any], result: Dict[str, Any]) -> str:
                 "：" + it["coverage_note"] if it.get("coverage_note") else ""))
         lines.append("")
 
+    # 参数来源
+    audit = src.audit_case(case)
+    lines.append("## 六、参数来源与可信度")
+    lines.append("")
+    lines.append("| 指标 | 值 |")
+    lines.append("| --- | ---: |")
+    lines.append("| 填写的参数总数 | %d |" % audit["total"])
+    lines.append("| 已标注来源 | %d（%.0f%%） |"
+                 % (audit["annotated"], audit["coverage"] * 100))
+    lines.append("| 可直接引用 | %s |" % ("是" if audit["citable"] else "**否**"))
+    lines.append("")
+
+    if audit["strong"]:
+        lines.append("### 已核实的参数")
+        lines.append("")
+        lines.append("| 参数 | 取值 | 可信度 | 来源 | 说明 |")
+        lines.append("| --- | ---: | --- | --- | --- |")
+        for r in audit["strong"]:
+            i = r["info"]
+            lines.append("| %s | %s | %s | %s | %s |" % (
+                r["key"], r["value"], i["confidence_label"],
+                i["source_title"] or "—", r["note"] or i["note"] or "—"))
+        lines.append("")
+
+    if audit["weak"]:
+        lines.append("### 需查证或无来源的参数")
+        lines.append("")
+        lines.append("| 参数 | 取值 | 可信度 | 来源 | 待办 |")
+        lines.append("| --- | ---: | --- | --- | --- |")
+        for r in audit["weak"]:
+            i = r["info"]
+            lines.append("| %s | %s | **%s** | %s | %s |" % (
+                r["key"], r["value"], i["confidence_label"],
+                i["source_title"] or "—",
+                i["action_required"] or r["note"] or i["note"] or "—"))
+        lines.append("")
+
+    if audit["missing"]:
+        lines.append("### 未标注来源的参数")
+        lines.append("")
+        lines.append("> 以下参数没有任何出处标注。它们在计算结果中与有来源的参数"
+                     "外观完全一致，但不具备可引用性——这是本案例目前最需要补齐的部分。")
+        lines.append("")
+        lines.append("| 参数 | 取值 |")
+        lines.append("| --- | ---: |")
+        for m in audit["missing"]:
+            lines.append("| %s | %s |" % (m["key"], m["value"]))
+        lines.append("")
+
+    if not audit["citable"]:
+        lines.append("> **引用限制**：本案例存在未标注或待查证的参数，"
+                     "其计算结果可用于演示工具能力与条款结构对比，"
+                     "但不得作为损失金额的实证依据对外引用。")
+        lines.append("")
+
     if narrative.get("disputes"):
-        lines.append("## 六、争议点与本土化提示")
+        lines.append("## 七、争议点与本土化提示")
         lines.append("")
         for d in narrative["disputes"]:
             lines.append("- %s" % d)
@@ -200,14 +256,14 @@ def render_markdown(case: Dict[str, Any], result: Dict[str, Any]) -> str:
 
     notes = (pol_info.get("settlement_notes") or []) + (stl.get("notes") or [])
     if notes:
-        lines.append("## 七、条款结构说明")
+        lines.append("## 八、条款结构说明")
         lines.append("")
         for n in notes:
             lines.append("- %s" % n)
         lines.append("")
 
     if result.get("warnings"):
-        lines.append("## 八、核算提示")
+        lines.append("## 九、核算提示")
         lines.append("")
         for w in result["warnings"]:
             lines.append("- %s" % w)
@@ -316,6 +372,48 @@ def cmd_mapping(args: argparse.Namespace) -> int:
         print("→ %s" % args.out)
     else:
         print(text)
+    return 0
+
+
+def cmd_audit(args: argparse.Namespace) -> int:
+    """检查案例参数的来源标注覆盖情况。"""
+    files = _expand(args.files)
+    bad = 0
+    for path in files:
+        with open(path, "r", encoding="utf-8") as f:
+            case = json.load(f)
+        a = src.audit_case(case)
+        mark = "✓" if a["citable"] else "✗"
+        if not a["citable"]:
+            bad += 1
+        print("%s %s" % (mark, case.get("case_name") or os.path.basename(path)))
+        print("   参数 %d 个，已标注 %d 个（%.0f%%），已核实 %d，待查证 %d，未标注 %d"
+              % (a["total"], a["annotated"], a["coverage"] * 100,
+                 len(a["strong"]), len(a["weak"]), len(a["missing"])))
+        if args.verbose:
+            for m in a["missing"]:
+                print("     未标注  %-12s = %s" % (m["key"], m["value"]))
+            for r in a["weak"]:
+                print("     待查证  %-12s = %s  (%s)"
+                      % (r["key"], r["value"], r["info"]["confidence_label"]))
+        print()
+    if bad:
+        print("%d/%d 个案例尚不可对外引用。" % (bad, len(files)))
+    return 0
+
+
+def cmd_sources(args: argparse.Namespace) -> int:
+    """列出参数来源库。"""
+    lib = src.load()
+    print(lib.get("principle", ""))
+    print()
+    for s_ in lib.get("sources", []):
+        print("  [%s] %s" % (s_["id"], s_["title"]))
+        print("      类型 %s ｜ 优先级 %s ｜ 状态 %s"
+              % (s_.get("kind"), s_.get("priority"), s_.get("verification_status")))
+        if s_.get("caveat"):
+            print("      注意：%s" % s_["caveat"])
+        print()
     return 0
 
 
@@ -457,6 +555,14 @@ def main(argv: List[str] = None) -> int:
     p_map.add_argument("policy", help="保单 id")
     p_map.add_argument("--out", help="输出 Markdown 文件")
     p_map.set_defaults(func=cmd_mapping)
+
+    p_aud = sub.add_parser("audit", help="检查案例参数的来源标注覆盖")
+    p_aud.add_argument("files", nargs="+")
+    p_aud.add_argument("-v", "--verbose", action="store_true")
+    p_aud.set_defaults(func=cmd_audit)
+
+    p_src = sub.add_parser("sources", help="列出参数来源库")
+    p_src.set_defaults(func=cmd_sources)
 
     p_run = sub.add_parser("run", help="批量跑案例")
     p_run.add_argument("files", nargs="+")

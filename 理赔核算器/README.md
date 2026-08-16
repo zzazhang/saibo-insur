@@ -148,11 +148,68 @@ python tools/build_policies.py
 个别科目需要偏离条款判定时（论证特约扩展等），加 `"include_override": true`
 并显式给出 `include`——引擎会照做，同时在 warnings 里留痕。
 
+## 参数来源层
+
+条款只管「赔什么」，不管「多少钱」。案例里的工时、费率、日均收入这些数字，
+条款文本一个都给不了。没有出处的数字，案例就只是格式样例。
+
+### 本土化原则
+
+**工时与服务成本类科目一律优先使用 GB/T 42461-2023 国标口径，只有在国内确无
+对应数据源时才援引国际报告，且必须显式标注口径差异。**
+
+IBM、Sophos 的数字是全球或美国口径、以美元计。拿 444 万美元的全球均值去核定
+一家中国物流企业的损失，本身就是本项目所批判的「直接移植国际标准」。
+参数层不本土化，损失分类框架的本土化就是半截子工程。
+
+GB/T 42461-2023 恰好补上这一块：与 GB/T 20986-2023（本项目 6 模块框架的依据）
+同属一个标准族，专为网络安全服务的成本预算、招投标、决算而设，给出分省市、
+分级别的服务人员成本单价，由 CCIA 每年更新。其人力成本公式为：
+
+```
+L = Σ(Pᵢ × Qᵢ)      Pᵢ 第 i 级人员成本单价（元/人日），Qᵢ 该级别工作量（人日）
+S = AS ÷ 年工作天数   每月工作天数取 20.67（人社部发〔2025〕2 号）
+```
+
+catalog 的费率参数单位是元/小时，换算按 1 人日 = 8 小时。
+
+### 可信度四档
+
+| 档位 | 含义 | 可否对外引用 |
+| --- | --- | :---: |
+| `verified` | 在可靠来源中找到明确数字 | ✓ |
+| `derived` | 由公开方法与公开输入推算，方法可复核 | ✓ |
+| `pending` | 方法已确认，具体数值需查阅原始文件 | ✗ |
+| `assumed` | 无来源，编者估计 | ✗ |
+
+**标注了来源不等于有出处。** 标为 `editor-estimate` 的参数照样计入「待查证」，
+审计器不会因为填了标注就放行。
+
+### 案例中的标注方式
+
+```json
+"param_sources": {
+  "F1-01.p2": {"ref": "sec-service-rate-senior", "note": "按高级级别单价 ÷8 折算"},
+  "S1-01.p1": {"ref": "editor-estimate", "note": "按年营收 6.6 亿 ÷ 365 取整"}
+}
+```
+
+键为 `科目编号.参数键`，凭证类科目直接用 `科目编号`。该块不参与计算，只进报告。
+
+```bash
+python -m claims_calc.cli sources              # 列出来源库
+python -m claims_calc.cli audit cases/*.json -v # 检查标注覆盖
+```
+
+来源库由 `tools/build_parameter_sources.py` 生成。
+
 ## 命令行
 
 ```bash
 python -m claims_calc.cli list                          # 保单库
 python -m claims_calc.cli mapping <保单id> --out x.md    # 69 项条款责任对应表
+python -m claims_calc.cli sources                       # 参数来源库
+python -m claims_calc.cli audit cases/*.json -v         # 参数来源标注审计
 python -m claims_calc.cli validate cases/*.json         # 只校验结构
 python -m claims_calc.cli run cases/*.json              # 批量跑数
 python -m claims_calc.cli run cases/*.json --md out/    # 导出 Markdown 报告与结果 JSON

@@ -12,6 +12,7 @@ if ROOT not in sys.path:
 from claims_calc import cases as case_io  # noqa: E402
 from claims_calc import policies as pol  # noqa: E402
 from claims_calc import settlement  # noqa: E402
+from claims_calc import sources as psrc  # noqa: E402
 from claims_calc.engine import build_demo_case, compute, get_catalog  # noqa: E402
 
 
@@ -382,6 +383,81 @@ class TestCase01Counterfactual(unittest.TestCase):
         r = compute(case_io.strip_to_compute(case_io.load_case("case-01-cosco-ransomware")))
         self.assertEqual(r["settlement"]["deductible_amount"], 110000.0)
         self.assertTrue(r["settlement"]["conditional_notes"])
+
+
+class TestParameterSources(unittest.TestCase):
+    """
+    参数来源层：案例里的每个数字都要能说清出处。
+
+    最危险的不是「没有来源」，而是「没有来源但看起来和有来源的一样」。
+    审计器的职责就是把这件事变得无处可藏。
+    """
+
+    def test_unannotated_case_is_not_citable(self):
+        case = {"items": {"F1-01": {"params": {"p1": 100, "p2": 1000}}}}
+        a = psrc.audit_case(case)
+        self.assertEqual(a["total"], 2)
+        self.assertEqual(a["annotated"], 0)
+        self.assertFalse(a["citable"])
+        self.assertEqual(len(a["missing"]), 2)
+
+    def test_editor_estimate_counts_as_weak_not_strong(self):
+        """标了「编者估计」也不算数——标注 ≠ 有出处。"""
+        case = {
+            "items": {"F1-01": {"params": {"p1": 100}}},
+            "param_sources": {"F1-01.p1": {"ref": "editor-estimate"}},
+        }
+        a = psrc.audit_case(case)
+        self.assertEqual(a["annotated"], 1)
+        self.assertEqual(len(a["weak"]), 1)
+        self.assertEqual(len(a["strong"]), 0)
+        self.assertFalse(a["citable"])
+
+    def test_verified_source_counts_as_strong(self):
+        case = {
+            "items": {"S1-01": {"params": {"p2": 5}}},
+            "param_sources": {"S1-01.p2": {"ref": "ransomware-recovery-days"}},
+        }
+        a = psrc.audit_case(case)
+        self.assertEqual(len(a["strong"]), 1)
+        self.assertTrue(a["citable"])
+
+    def test_unknown_ref_is_flagged(self):
+        case = {
+            "items": {"F1-01": {"params": {"p1": 100}}},
+            "param_sources": {"F1-01.p1": {"ref": "no-such-source"}},
+        }
+        a = psrc.audit_case(case)
+        self.assertFalse(a["strong"])
+        self.assertFalse(a["weak"][0]["info"]["found"])
+
+    def test_zero_params_are_not_counted(self):
+        case = {"items": {"F1-01": {"params": {"p1": 0, "p2": None}}}}
+        self.assertEqual(psrc.audit_case(case)["total"], 0)
+
+    def test_voucher_is_audited(self):
+        case = {"items": {"F5-01": {"voucher": 150000}}}
+        a = psrc.audit_case(case)
+        self.assertEqual(a["total"], 1)
+        self.assertEqual(a["missing"][0]["key"], "F5-01")
+
+    def test_domestic_standard_takes_priority(self):
+        """本土化原则：工时类科目挂靠的必须是国标，不是国际报告。"""
+        gb = psrc.get_source("gbt-42461-2023")
+        self.assertEqual(gb["priority"], "primary_domestic")
+        for ref in ("sec-service-rate-senior", "sec-service-rate-mid"):
+            self.assertEqual(psrc.get_parameter(ref)["source_id"], "gbt-42461-2023")
+        for ref in ("ibm-cost-data-breach-2025", "sophos-ransomware-2025"):
+            self.assertEqual(psrc.get_source(ref)["priority"], "international_benchmark")
+            self.assertIn("caveat", psrc.get_source(ref))
+
+    def test_saved_cases_are_fully_annotated(self):
+        """cases/ 里的正式案例必须 100% 标注（可以待查证，但不能没标）。"""
+        for name in [c["name"] for c in case_io.list_cases()]:
+            if name.startswith("demo-"):
+                continue
+            a = psrc.audit_case(case_io.load_case(name))
+            self.assertEqual(a["missing"], [], "%s 存在未标注参数" % name)
 
 
 class TestCaseIO(unittest.TestCase):
