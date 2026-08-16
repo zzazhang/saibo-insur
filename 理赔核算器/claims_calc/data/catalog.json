@@ -1,0 +1,1403 @@
+{
+  "categories": [
+    {
+      "code": "F1",
+      "name": "事件响应与调查取证费",
+      "switch_default": "ON"
+    },
+    {
+      "code": "F2",
+      "name": "系统与数据恢复重建费",
+      "switch_default": "ON"
+    },
+    {
+      "code": "F3",
+      "name": "整改加固与漏洞修复费",
+      "switch_default": "ON"
+    },
+    {
+      "code": "F4",
+      "name": "法律与合规服务费",
+      "switch_default": "ON"
+    },
+    {
+      "code": "F5",
+      "name": "公关声誉与内容处置费",
+      "switch_default": "ON"
+    },
+    {
+      "code": "F6",
+      "name": "通知与客户响应费",
+      "switch_default": "ON"
+    },
+    {
+      "code": "F7",
+      "name": "临时替代与应急运营费",
+      "switch_default": "ON"
+    },
+    {
+      "code": "F8",
+      "name": "品牌修复费(单列)",
+      "switch_default": "ON"
+    },
+    {
+      "code": "S1",
+      "name": "营业中断收入损失",
+      "switch_default": "ON"
+    },
+    {
+      "code": "S2",
+      "name": "自有财产与资源损失",
+      "switch_default": "ON"
+    },
+    {
+      "code": "S3",
+      "name": "赎金(单列)",
+      "switch_default": "ON"
+    },
+    {
+      "code": "S4",
+      "name": "内部人力与额外运营成本(有限)",
+      "switch_default": "ON"
+    },
+    {
+      "code": "R1",
+      "name": "第三方赔偿与和解责任",
+      "switch_default": "ON"
+    },
+    {
+      "code": "R2",
+      "name": "抗辩与应诉费用",
+      "switch_default": "ON"
+    },
+    {
+      "code": "R3",
+      "name": "支付卡与卡组织相关责任",
+      "switch_default": "ON"
+    }
+  ],
+  "items": [
+    {
+      "code": "F1-01",
+      "name": "外部事件响应与专家服务费",
+      "formula_desc": "工时 × 费率(参考800–3000元/h,默认1500可改)",
+      "params": [
+        {
+          "key": "p1",
+          "label": "响应/专家工时(h)",
+          "default": 40
+        },
+        {
+          "key": "p2",
+          "label": "费率(元/h)",
+          "default": 1500
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "工时须签到表佐证",
+      "formula_type": "product2",
+      "category": "F1"
+    },
+    {
+      "code": "F1-02",
+      "name": "取证调查费",
+      "formula_desc": "工时 × 费率,或按取证机构发票",
+      "params": [
+        {
+          "key": "p1",
+          "label": "取证工时(h)",
+          "default": 60
+        },
+        {
+          "key": "p2",
+          "label": "费率(元/h)",
+          "default": 1200
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "Panel Vendor须事先书面同意",
+      "formula_type": "product2",
+      "category": "F1"
+    },
+    {
+      "code": "F1-03",
+      "name": "取证镜像费",
+      "formula_desc": "镜像数量 × 单价(参考500–2000元/个,默认1250)",
+      "params": [
+        {
+          "key": "p1",
+          "label": "镜像数量(个)",
+          "default": 10
+        },
+        {
+          "key": "p2",
+          "label": "单价(元/个)",
+          "default": 1250
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "按镜像清单及验收单",
+      "formula_type": "product2",
+      "category": "F1"
+    },
+    {
+      "code": "F1-04",
+      "name": "证据保全费",
+      "formula_desc": "保全机构发票核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "附保全清单",
+      "formula_type": "voucher_only",
+      "category": "F1"
+    },
+    {
+      "code": "F1-05",
+      "name": "威胁狩猎费",
+      "formula_desc": "合同单价 × 服务时长",
+      "params": [
+        {
+          "key": "p1",
+          "label": "服务时长(期)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "期单价(元)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "附交付报告",
+      "formula_type": "product2",
+      "category": "F1"
+    },
+    {
+      "code": "F1-06",
+      "name": "供应链调查费",
+      "formula_desc": "第三方调查机构发票核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "附供应商安全公告",
+      "formula_type": "voucher_only",
+      "category": "F1"
+    },
+    {
+      "code": "F1-07",
+      "name": "外部审计评估费",
+      "formula_desc": "审计机构合同金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "附审计报告",
+      "formula_type": "voucher_only",
+      "category": "F1"
+    },
+    {
+      "code": "F1-08",
+      "name": "电子签名验证费",
+      "formula_desc": "验证机构发票核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "来源场景※",
+      "formula_type": "voucher_only",
+      "category": "F1"
+    },
+    {
+      "code": "F1-09",
+      "name": "干扰源定位费",
+      "formula_desc": "检测机构发票核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "限电磁干扰场景",
+      "formula_type": "voucher_only",
+      "category": "F1"
+    },
+    {
+      "code": "F1-10",
+      "name": "资金追回费",
+      "formula_desc": "追偿机构服务费发票核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "仅服务费,被骗资金不在此",
+      "formula_type": "voucher_only",
+      "category": "F1"
+    },
+    {
+      "code": "F1-11",
+      "name": "临时工具采购费",
+      "formula_desc": "工具采购发票核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "附用途说明",
+      "formula_type": "voucher_only",
+      "category": "F1"
+    },
+    {
+      "code": "F2-01",
+      "name": "系统恢复重建费",
+      "formula_desc": "恢复/重建工时 × 工程师费率",
+      "params": [
+        {
+          "key": "p1",
+          "label": "工时(h)",
+          "default": 200
+        },
+        {
+          "key": "p2",
+          "label": "费率(元/h)",
+          "default": 800
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "违规场景须证非故意",
+      "formula_type": "product2",
+      "category": "F2"
+    },
+    {
+      "code": "F2-02",
+      "name": "恶意组件清理费",
+      "formula_desc": "清理工时 × 费率",
+      "params": [
+        {
+          "key": "p1",
+          "label": "工时(h)",
+          "default": 40
+        },
+        {
+          "key": "p2",
+          "label": "费率(元/h)",
+          "default": 800
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "附清理验收单",
+      "formula_type": "product2",
+      "category": "F2"
+    },
+    {
+      "code": "F2-03",
+      "name": "数据恢复费",
+      "formula_desc": "恢复数据量 × 服务商单价",
+      "params": [
+        {
+          "key": "p1",
+          "label": "恢复量(GB)",
+          "default": 500
+        },
+        {
+          "key": "p2",
+          "label": "单价(元/GB)",
+          "default": 100
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "恢复量以备份日志为准",
+      "formula_type": "product2",
+      "category": "F2"
+    },
+    {
+      "code": "F2-04",
+      "name": "备份重建费",
+      "formula_desc": "备份重建工时 × 费率",
+      "params": [
+        {
+          "key": "p1",
+          "label": "工时(h)",
+          "default": 60
+        },
+        {
+          "key": "p2",
+          "label": "费率(元/h)",
+          "default": 800
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "从运维记录提取",
+      "formula_type": "product2",
+      "category": "F2"
+    },
+    {
+      "code": "F2-05",
+      "name": "数据迁移费",
+      "formula_desc": "迁移数据量 × 单价",
+      "params": [
+        {
+          "key": "p1",
+          "label": "迁移量(GB)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "单价(元/GB)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": null,
+      "formula_type": "product2",
+      "category": "F2"
+    },
+    {
+      "code": "F2-06",
+      "name": "数据集清理费",
+      "formula_desc": "清理工时 × 费率",
+      "params": [
+        {
+          "key": "p1",
+          "label": "工时(h)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "费率(元/h)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "AI数据投毒场景",
+      "formula_type": "product2",
+      "category": "F2"
+    },
+    {
+      "code": "F2-07",
+      "name": "网页与内容恢复费",
+      "formula_desc": "恢复/清理条目数 × 单价",
+      "params": [
+        {
+          "key": "p1",
+          "label": "条目(页)数",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "单价(元/条)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "附篡改前后截图",
+      "formula_type": "product2",
+      "category": "F2"
+    },
+    {
+      "code": "F2-08",
+      "name": "域名/DNS恢复费",
+      "formula_desc": "域名/DNS服务商账单核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "附操作日志",
+      "formula_type": "voucher_only",
+      "category": "F2"
+    },
+    {
+      "code": "F2-09",
+      "name": "网络与配置恢复费",
+      "formula_desc": "工程师工时 × 费率",
+      "params": [
+        {
+          "key": "p1",
+          "label": "工时(h)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "费率(元/h)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": null,
+      "formula_type": "product2",
+      "category": "F2"
+    },
+    {
+      "code": "F2-10",
+      "name": "抢修与安装费",
+      "formula_desc": "抢修/安装工时 × 费率",
+      "params": [
+        {
+          "key": "p1",
+          "label": "工时(h)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "费率(元/h)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": null,
+      "formula_type": "product2",
+      "category": "F2"
+    },
+    {
+      "code": "F2-11",
+      "name": "环境清理费",
+      "formula_desc": "清理合同金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "特约※,附灾害证明",
+      "formula_type": "voucher_only",
+      "category": "F2"
+    },
+    {
+      "code": "F3-01",
+      "name": "漏洞修补费",
+      "formula_desc": "(高危×4h+中危×2h+低危×1h) × 费率 × 加急系数(1.5–2,常规=1)",
+      "params": [
+        {
+          "key": "p1",
+          "label": "高危CVE数",
+          "default": 5
+        },
+        {
+          "key": "p2",
+          "label": "中危CVE数",
+          "default": 10
+        },
+        {
+          "key": "p3",
+          "label": "低危CVE数",
+          "default": 20
+        },
+        {
+          "key": "p4",
+          "label": "费率(元/h)",
+          "default": 800
+        },
+        {
+          "key": "p5",
+          "label": "加急系数",
+          "default": 1.5
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "工时基准为行业假设,可校准",
+      "formula_type": "f3_vuln",
+      "category": "F3"
+    },
+    {
+      "code": "F3-02",
+      "name": "系统与设施加固费",
+      "formula_desc": "加固/整改清单逐项核定(合同+验收总额)",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "仅事件驱动整改,预防性除外",
+      "formula_type": "voucher_only",
+      "category": "F3"
+    },
+    {
+      "code": "F3-03",
+      "name": "渗透测试费",
+      "formula_desc": "测试机构发票核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "限整改验证",
+      "formula_type": "voucher_only",
+      "category": "F3"
+    },
+    {
+      "code": "F3-04",
+      "name": "事件后安全培训费",
+      "formula_desc": "参训人数 × 人均单价",
+      "params": [
+        {
+          "key": "p1",
+          "label": "参训人数",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "人均单价(元)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "限事件后针对性培训",
+      "formula_type": "product2",
+      "category": "F3"
+    },
+    {
+      "code": "F3-05",
+      "name": "商业秘密保护费",
+      "formula_desc": "保护措施合同金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "扩展条款",
+      "formula_type": "voucher_only",
+      "category": "F3"
+    },
+    {
+      "code": "F4-01",
+      "name": "律师服务费(非诉)",
+      "formula_desc": "小时费率 × 工时(律师费账单)",
+      "params": [
+        {
+          "key": "p1",
+          "label": "工时(h)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "小时费率(元)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "附工时明细",
+      "formula_type": "product2",
+      "category": "F4"
+    },
+    {
+      "code": "F4-02",
+      "name": "合规顾问费",
+      "formula_desc": "顾问合同金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": null,
+      "formula_type": "voucher_only",
+      "category": "F4"
+    },
+    {
+      "code": "F5-01",
+      "name": "公关服务费",
+      "formula_desc": "公关公司合同/发票核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "紧急属性须合同注明",
+      "formula_type": "voucher_only",
+      "category": "F5"
+    },
+    {
+      "code": "F5-02",
+      "name": "品牌监测费",
+      "formula_desc": "监测机构合同金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": null,
+      "formula_type": "voucher_only",
+      "category": "F5"
+    },
+    {
+      "code": "F5-03",
+      "name": "平台下架费",
+      "formula_desc": "下架次数 × 平台单价",
+      "params": [
+        {
+          "key": "p1",
+          "label": "下架次数",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "单价(元/次)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "按平台操作日志",
+      "formula_type": "product2",
+      "category": "F5"
+    },
+    {
+      "code": "F5-04",
+      "name": "广告重投费",
+      "formula_desc": "重投投放量 × 单价(仅重投部分)",
+      "params": [
+        {
+          "key": "p1",
+          "label": "重投量",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "单价(元)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "账单须区分重投",
+      "formula_type": "product2",
+      "category": "F5"
+    },
+    {
+      "code": "F5-05",
+      "name": "业务关系修复费",
+      "formula_desc": "修复活动合同金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": null,
+      "formula_type": "voucher_only",
+      "category": "F5"
+    },
+    {
+      "code": "F6-01",
+      "name": "受影响对象识别费",
+      "formula_desc": "识别服务商合同金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": null,
+      "formula_type": "voucher_only",
+      "category": "F6"
+    },
+    {
+      "code": "F6-02",
+      "name": "通知费",
+      "formula_desc": "渠道1人数×单价 + 渠道2人数×单价(短信0.05–0.2/邮件0.1–0.5/电话按呼叫中心费率)",
+      "params": [
+        {
+          "key": "p1",
+          "label": "渠道1人数",
+          "default": 100000
+        },
+        {
+          "key": "p2",
+          "label": "渠道1单价(元)",
+          "default": 0.1
+        },
+        {
+          "key": "p3",
+          "label": "渠道2人数",
+          "default": null
+        },
+        {
+          "key": "p4",
+          "label": "渠道2单价(元)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "人数以影响评估报告为准",
+      "formula_type": "f6_notify",
+      "category": "F6"
+    },
+    {
+      "code": "F6-03",
+      "name": "信用监控费",
+      "formula_desc": "监控人数 × 月费 × 月数",
+      "params": [
+        {
+          "key": "p1",
+          "label": "监控人数",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "月费(元/人·月)",
+          "default": null
+        },
+        {
+          "key": "p3",
+          "label": "监控月数",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "国内适用低",
+      "formula_type": "product3",
+      "category": "F6"
+    },
+    {
+      "code": "F6-04",
+      "name": "换卡费",
+      "formula_desc": "换卡数量 × 单卡成本",
+      "params": [
+        {
+          "key": "p1",
+          "label": "换卡数量",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "单卡成本(元)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": null,
+      "formula_type": "product2",
+      "category": "F6"
+    },
+    {
+      "code": "F6-05",
+      "name": "客服响应费",
+      "formula_desc": "客服加班工时 × 费率",
+      "params": [
+        {
+          "key": "p1",
+          "label": "加班工时(h)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "费率(元/h)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "按排班加班记录",
+      "formula_type": "product2",
+      "category": "F6"
+    },
+    {
+      "code": "F7-01",
+      "name": "应急防护与DDoS缓解费",
+      "formula_desc": "云防护账单/租赁合同核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "攻击时段以NTA报告认定",
+      "formula_type": "voucher_only",
+      "category": "F7"
+    },
+    {
+      "code": "F7-02",
+      "name": "带宽扩容费",
+      "formula_desc": "扩容时长 × 期单价",
+      "params": [
+        {
+          "key": "p1",
+          "label": "扩容时长(期)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "期单价(元)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": null,
+      "formula_type": "product2",
+      "category": "F7"
+    },
+    {
+      "code": "F7-03",
+      "name": "临时替代设施费",
+      "formula_desc": "使用天数 × 日租金",
+      "params": [
+        {
+          "key": "p1",
+          "label": "使用天数",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "日租金(元)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "部分场景※",
+      "formula_type": "product2",
+      "category": "F7"
+    },
+    {
+      "code": "F7-04",
+      "name": "临时人力与外包费",
+      "formula_desc": "招聘/外包合同金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "存量场景※为主",
+      "formula_type": "voucher_only",
+      "category": "F7"
+    },
+    {
+      "code": "F7-05",
+      "name": "替代服务与云采购费",
+      "formula_desc": "替代服务合同金额核定(限中断期间)",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": null,
+      "formula_type": "voucher_only",
+      "category": "F7"
+    },
+    {
+      "code": "F7-06",
+      "name": "加急采购溢价",
+      "formula_desc": "加急合同溢价部分金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "扩展条款,仅溢价部分",
+      "formula_type": "voucher_only",
+      "category": "F7"
+    },
+    {
+      "code": "F7-07",
+      "name": "紧急安保费",
+      "formula_desc": "安保合同金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "存量场景※",
+      "formula_type": "voucher_only",
+      "category": "F7"
+    },
+    {
+      "code": "F8-01",
+      "name": "品牌修复费",
+      "formula_desc": "(事件前−事件后)/事件前 × 品牌修复分项限额(须特约)",
+      "params": [
+        {
+          "key": "p1",
+          "label": "事件前品牌价值(元)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "事件后品牌价值(元)",
+          "default": null
+        },
+        {
+          "key": "p3",
+          "label": "品牌修复分项限额(元)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "间接;须评估机构报告;无特约不赔",
+      "formula_type": "f8_brand",
+      "category": "F8"
+    },
+    {
+      "code": "S1-01",
+      "name": "自身系统中断收入损失",
+      "formula_desc": "日均收入 × MAX(中断天数−等待期,0) × 毛利率 × 影响比例",
+      "params": [
+        {
+          "key": "p1",
+          "label": "日均收入(元,前12个月)",
+          "default": 500000
+        },
+        {
+          "key": "p2",
+          "label": "中断天数",
+          "default": 3
+        },
+        {
+          "key": "p3",
+          "label": "等待期(天)",
+          "default": 1
+        },
+        {
+          "key": "p4",
+          "label": "毛利率(0–1)",
+          "default": 0.4
+        },
+        {
+          "key": "p5",
+          "label": "影响比例(0–1)",
+          "default": 0.8
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "财务与监控日志交叉验证",
+      "formula_type": "s1_extrapolate",
+      "category": "S1"
+    },
+    {
+      "code": "S1-02",
+      "name": "依赖中断收入损失(第三方/云)",
+      "formula_desc": "同S1-01口径;中断期间以供应商公告认定",
+      "params": [
+        {
+          "key": "p1",
+          "label": "日均收入(元)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "中断天数",
+          "default": null
+        },
+        {
+          "key": "p3",
+          "label": "等待期(天)",
+          "default": 0
+        },
+        {
+          "key": "p4",
+          "label": "毛利率(0–1)",
+          "default": null
+        },
+        {
+          "key": "p5",
+          "label": "影响比例(0–1)",
+          "default": 1
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "依赖中断,多需扩展条款",
+      "formula_type": "s1_extrapolate",
+      "category": "S1"
+    },
+    {
+      "code": "S1-03",
+      "name": "营业中断损失(事后建模口径)",
+      "formula_desc": "MAX(基线收入−事件期间实际收入,0) × 毛利率 × 影响比例",
+      "params": [
+        {
+          "key": "p1",
+          "label": "基线期间收入(元)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "事件期间实际收入(元)",
+          "default": null
+        },
+        {
+          "key": "p3",
+          "label": "毛利率(0–1)",
+          "default": null
+        },
+        {
+          "key": "p4",
+          "label": "影响比例(0–1)",
+          "default": 1
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "间接口径;与S1-01/02二选一",
+      "formula_type": "s1_financial",
+      "category": "S1"
+    },
+    {
+      "code": "S2-01",
+      "name": "设备替换采购费",
+      "formula_desc": "设备采购合同金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "须EDR证明固件不可恢复",
+      "formula_type": "voucher_only",
+      "category": "S2"
+    },
+    {
+      "code": "S2-02",
+      "name": "数据重新采集费",
+      "formula_desc": "采集量 × 单价",
+      "params": [
+        {
+          "key": "p1",
+          "label": "采集量",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "单价(元)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "限数据不可恢复时",
+      "formula_type": "product2",
+      "category": "S2"
+    },
+    {
+      "code": "S2-03",
+      "name": "第三方数据重新提供费",
+      "formula_desc": "数据采购合同金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": null,
+      "formula_type": "voucher_only",
+      "category": "S2"
+    },
+    {
+      "code": "S2-04",
+      "name": "模型重新训练费",
+      "formula_desc": "GPU小时 × 单价",
+      "params": [
+        {
+          "key": "p1",
+          "label": "重训GPU小时",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "单价(元/GPU·h)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "特约;从训练日志提取",
+      "formula_type": "product2",
+      "category": "S2"
+    },
+    {
+      "code": "S2-05",
+      "name": "云资源超额费",
+      "formula_desc": "MAX(异常时段账单 − 基线时段账单, 0)",
+      "params": [
+        {
+          "key": "p1",
+          "label": "异常时段账单(元)",
+          "default": 50000
+        },
+        {
+          "key": "p2",
+          "label": "基线时段账单(元)",
+          "default": 10000
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "基线建议取异常前30天均值",
+      "formula_type": "max_diff",
+      "category": "S2"
+    },
+    {
+      "code": "S3-01",
+      "name": "赎金",
+      "formula_desc": "MIN(支付金额, 赎金分项限额);限额留空则不封顶",
+      "params": [
+        {
+          "key": "p1",
+          "label": "支付金额(元)",
+          "default": 800000
+        },
+        {
+          "key": "p2",
+          "label": "赎金分项限额(元)",
+          "default": 1000000
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "须公安知情+保险人书面同意",
+      "formula_type": "s3_ransom",
+      "category": "S3"
+    },
+    {
+      "code": "S4-01",
+      "name": "内部人力工时成本",
+      "formula_desc": "停工/配合调查工时 × 平均工资",
+      "params": [
+        {
+          "key": "p1",
+          "label": "工时(h)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "平均工资(元/h)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "有限承保",
+      "formula_type": "product2",
+      "category": "S4"
+    },
+    {
+      "code": "S4-02",
+      "name": "额外运营成本",
+      "formula_desc": "加班工资 + 外包/手工处理金额(仅增量)",
+      "params": [
+        {
+          "key": "p1",
+          "label": "加班工资(元)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "外包金额(元)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "有限;须与固定成本切分",
+      "formula_type": "sum2",
+      "category": "S4"
+    },
+    {
+      "code": "R1-01",
+      "name": "数据主体赔偿",
+      "formula_desc": "赔偿人数 × 单人赔偿金额(个保法69条)",
+      "params": [
+        {
+          "key": "p1",
+          "label": "赔偿人数",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "单人金额(元)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "以判决/和解认定",
+      "formula_type": "product2",
+      "category": "R1"
+    },
+    {
+      "code": "R1-02",
+      "name": "和解与赔偿金",
+      "formula_desc": "和解/赔偿协议金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "须保险人事先同意",
+      "formula_type": "voucher_only",
+      "category": "R1"
+    },
+    {
+      "code": "R1-03",
+      "name": "和解协议整改费",
+      "formula_desc": "协议整改项核定金额 × 法律确认(是/否)",
+      "params": [
+        {
+          "key": "p1",
+          "label": "整改项核定金额(元)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "法律顾问已确认(是/否)",
+          "default": "否"
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "未确认条款效力不计入",
+      "formula_type": "r1_confirm",
+      "category": "R1"
+    },
+    {
+      "code": "R1-04",
+      "name": "客户与伙伴补偿费",
+      "formula_desc": "补偿协议金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": null,
+      "formula_type": "voucher_only",
+      "category": "R1"
+    },
+    {
+      "code": "R1-05",
+      "name": "欺诈交易赔偿分摊",
+      "formula_desc": "分摊协议金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": null,
+      "formula_type": "voucher_only",
+      "category": "R1"
+    },
+    {
+      "code": "R1-06",
+      "name": "违约罚金",
+      "formula_desc": "违约金条款金额核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "可保性存疑※",
+      "formula_type": "voucher_only",
+      "category": "R1"
+    },
+    {
+      "code": "R2-01",
+      "name": "诉讼与索赔抗辩费",
+      "formula_desc": "小时费率 × 工时(律师费账单)",
+      "params": [
+        {
+          "key": "p1",
+          "label": "工时(h)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "小时费率(元)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "刑事抗辩除外",
+      "formula_type": "product2",
+      "category": "R2"
+    },
+    {
+      "code": "R2-02",
+      "name": "监管调查抗辩费",
+      "formula_desc": "小时费率 × 工时",
+      "params": [
+        {
+          "key": "p1",
+          "label": "工时(h)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "小时费率(元)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "附监管调查通知书",
+      "formula_type": "product2",
+      "category": "R2"
+    },
+    {
+      "code": "R2-03",
+      "name": "专家证人费",
+      "formula_desc": "专家费发票核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": null,
+      "formula_type": "voucher_only",
+      "category": "R2"
+    },
+    {
+      "code": "R3-01",
+      "name": "卡组织评估与调查费",
+      "formula_desc": "卡组织评估/调查账单核定",
+      "params": [],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "PCI分项限额常见",
+      "formula_type": "voucher_only",
+      "category": "R3"
+    },
+    {
+      "code": "R3-02",
+      "name": "商户费率调整损失",
+      "formula_desc": "费率差额 × 补偿期间交易量",
+      "params": [
+        {
+          "key": "p1",
+          "label": "费率差额(小数,如0.003)",
+          "default": null
+        },
+        {
+          "key": "p2",
+          "label": "期间交易量(元)",
+          "default": null
+        }
+      ],
+      "voucher_default": null,
+      "include_default": "ON",
+      "hint": "期间须条款约定",
+      "formula_type": "product2",
+      "category": "R3"
+    }
+  ],
+  "s1_method_default": "公式外推法",
+  "sla_default": 0,
+  "notes": [
+    "理赔核算器(基于赔付科目表) 使用说明",
+    "一、这是事件已发生后的损失核算工具。逐条填写69个标准赔付科目的公式变量或凭证金额,自动得到各科目核定损失、15个大类小计与净核定合计。",
+    "二、颜色约定:黄底蓝字=输入格(只改这些);绿底=自动计算结果,请勿改动。",
+    "三、每行两种录入通道:①参数计算——填变量(如工时、费率、人数、单价),自动按计算式得数;②凭证直接核定——有合同/发票/账单总额时填\"凭证直接核定金额\"列,该列一经填写(>0)即覆盖参数计算,优先生效。",
+    "四、预填的参考值(黄底):响应费率1500元/h、镜像单价1250元/个、通知单价0.1元/人等来自网络资料行业参考区间,承保/核赔前应校准,后期获得真实数据可进行修改。",
+    "五、规则与汇总控制:",
+    "  1. 营业中断测法二选一——S1带区行的\"测法选择\"下拉:公式外推法(启用S1-01/02)或财务对照法(启用S1-03),未选中口径自动记0,不可叠加。",
+    "  2. 规则①SLA抵扣——在S1区末行填入已获SLA赔偿,汇总页自动从核定合计中扣减(以S1小计为上限)。",
+    "  3. 和解协议整改费(R1-03)——须将\"法律顾问已确认\"选为\"是\"方计入。",
+    "  4. 大类开关——汇总页每个大类一个ON/OFF开关(黄底):OFF时该大类计入金额记0、从合计与直/间分列中剔除,但科目明细与核定小计照常显示,便于按承保范围或分析口径切换。",
+    "六、示例数据:当前预填了一个勒索软件案例(取证、恢复、修补、通知、营业中断、赎金、云超额)作演示与自验。正式使用前,清空\"科目核算表\"中所有黄底输入格(保留参考值行可自行判断)及汇总页案件信息。",
+    "七、证据与前置条件:每行\"提示\"列给出关键执行要点;完整证据清单与执行要点见《赔付科目精简表》的\"标准科目与测度公式\"sheet,核赔时逐条对照。",
+    "八、本工具计算的是核定损失(事实口径)。是否承保、限额免赔如何适用,以具体保单条款为准;品牌修复费与赎金的分项限额已作为行内变量,由使用者按条款填入。",
+    "九、明细开关(承保过滤):科目核算表P列为每个明细科目提供ON/OFF。保险责任未覆盖的子项切OFF——该行核定损失照常计算显示(事实口径),但不进入汇总\"计入金额\"。橙色开关格提示该科目需特约/扩展/有限承保或可保性存疑,请对照保单逐项确认。大类开关(汇总页C列)与明细开关是两级与关系。"
+  ],
+  "case_defaults": {
+    "case_id": null,
+    "case_name": "示例:某公司勒索软件事件(演示数据,使用前清空)",
+    "calc_date": null
+  },
+  "column_headers": {
+    "code": "编号",
+    "name": "标准科目",
+    "formula_desc": "计算式",
+    "voucher": "凭证直接核定金额(元,优先)",
+    "loss": "核定损失(元,自动)",
+    "include": "计入?(承保过滤)",
+    "covered": "计入金额(元,自动)",
+    "hint": "提示"
+  },
+  "summary_headers": {
+    "cat_code": "大类编号",
+    "cat_name": "赔付大类",
+    "switch": "开关",
+    "assessed_subtotal": "核定损失小计(元)",
+    "covered_subtotal": "计入金额(元)",
+    "filled_count": "已填科目数",
+    "covered_total_label": "计入核定损失合计(仅开关ON的大类)",
+    "sla_label": "减:规则① SLA已获赔偿抵扣(不超过S1计入小计)",
+    "net_label": "净核定损失",
+    "indirect_label": "其中:间接损失口径小计(F8-01+S1-03,随开关联动)",
+    "direct_label": "其中:直接损失口径小计",
+    "fact_total_label": "参考:事实口径核定总损失(全部科目,不受任何开关影响)",
+    "note": "注:两级开关——汇总页C列控制整个大类,科目核算表P列控制单个明细项;明细计入=两级均为ON。开关只影响\"计入金额\",D列小计与科目核算表\"核定损失\"列始终显示事实口径。橙色开关格=该科目承保标记含特约/扩展/有限/存疑/※,最可能与保单责任有出入,请逐项核对条款后决定ON/OFF。"
+  },
+  "s1_method_label": "测法选择→",
+  "s1_methods": [
+    "公式外推法",
+    "财务对照法"
+  ],
+  "sla_row": {
+    "code": "规则①",
+    "name": "SLA已获赔偿抵扣",
+    "desc": "已从云服务商/供应商获得的SLA赔偿,汇总时从S1核定损失中扣减(不超过S1小计)",
+    "param_label": "已获SLA赔偿(元)"
+  }
+}

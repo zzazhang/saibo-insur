@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>理赔核算器 v2</title>
+  <link rel="stylesheet" href="vendor/tabler/tabler.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="app-body">
+  <div class="page">
+    <header class="navbar navbar-expand-md navbar-light app-navbar d-print-none">
+      <div class="container-xl">
+        <div class="navbar-brand app-brand">
+          <span class="brand-title">理赔核算器</span>
+          <span class="badge bg-blue-lt ms-2">v2.0</span>
+        </div>
+        <div class="navbar-nav flex-row order-md-last gap-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-demo">加载演示案</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-help">使用说明</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-wrapper">
+      <div class="page-header d-print-none">
+        <div class="container-xl">
+          <ol class="breadcrumb steps" id="step-nav" aria-label="核算步骤">
+            <li class="breadcrumb-item active" data-step="1"><span class="step-num">1</span> 案件与损失项</li>
+            <li class="breadcrumb-item" data-step="2"><span class="step-num">2</span> 参数填写</li>
+            <li class="breadcrumb-item" data-step="3"><span class="step-num">3</span> 结果报告</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="page-body">
+        <div class="container-xl">
+          <aside id="help-panel" class="card mb-3 d-none d-print-none">
+            <div class="card-body help-body"></div>
+          </aside>
+          <div id="warnings" class="alert alert-warning d-none d-print-none" role="alert"></div>
+
+          <!-- View 1: 案件及损失项选择 -->
+          <section id="view-1" class="view" data-view="1">
+            <div class="card mb-3">
+              <div class="card-header"><h3 class="card-title">案件概况</h3></div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label">案件编号</label>
+                    <input id="case-id" class="form-control" type="text" />
+                  </div>
+                  <div class="col-md-5">
+                    <label class="form-label">案件名称</label>
+                    <input id="case-name" class="form-control" type="text" />
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">核算日期</label>
+                    <input id="calc-date" class="form-control" type="text" placeholder="YYYY-MM-DD" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">
+                      案件基础类型
+                      <button type="button" class="tip-btn" data-tip="case-type" title="说明">?</button>
+                    </label>
+                    <select id="case-type" class="form-select"></select>
+                    <div class="form-hint">选择类型会预勾损失模块，仍可手工调整。</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">涉及的损失模块</h3>
+                <div class="card-actions">
+                  <button type="button" class="btn btn-sm btn-ghost-secondary" id="btn-modules-all">全选</button>
+                  <button type="button" class="btn btn-sm btn-ghost-secondary" id="btn-modules-none">清空</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="row g-2" id="module-picker"></div>
+              </div>
+            </div>
+
+            <div class="form-footer d-print-none">
+              <button type="button" class="btn btn-primary" id="btn-next-1">下一步：填写参数</button>
+            </div>
+          </section>
+
+          <!-- View 2: 相关参数填写 -->
+          <section id="view-2" class="view d-none" data-view="2">
+            <div class="card mb-3">
+              <div class="card-header"><h3 class="card-title">全局计算参数</h3></div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-5" id="s1-method-wrap">
+                    <label class="form-label">
+                      <span id="s1-method-label">测法选择</span>
+                      <button type="button" class="tip-btn" id="s1-tip-btn" aria-expanded="false" aria-controls="s1-popover" title="测法说明">?</button>
+                    </label>
+                    <select id="s1-method" class="form-select"></select>
+                    <div id="s1-popover" class="popover-panel d-none" role="tooltip">
+                      <p>只影响营业中断（S1）三行，且二选一、不可叠加：</p>
+                      <ul>
+                        <li><strong>公式外推法</strong>：启用 S1-01 / S1-02；S1-03 记 0</li>
+                        <li><strong>财务对照法</strong>：启用 S1-03；S1-01 / S1-02 记 0</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="col-md-4" id="sla-wrap">
+                    <label class="form-label" id="sla-label">已获SLA赔偿(元)</label>
+                    <input id="sla" class="form-control" type="text" inputmode="decimal" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="items-root"></div>
+
+            <div class="form-footer d-print-none">
+              <button type="button" class="btn btn-outline-secondary" id="btn-prev-2">返回</button>
+              <button type="button" class="btn btn-primary" id="btn-next-2">生成结果报告</button>
+            </div>
+          </section>
+
+          <!-- View 3: 结果报告 -->
+          <section id="view-3" class="view d-none" data-view="3">
+            <div class="d-flex justify-content-between align-items-center mb-3 d-print-none">
+              <h2 class="page-title mb-0">核算结果报告</h2>
+              <div class="btn-list">
+                <button type="button" class="btn btn-outline-secondary" id="btn-prev-3">返回修改</button>
+                <button type="button" class="btn btn-primary" id="btn-print">打印 / 另存为 PDF</button>
+              </div>
+            </div>
+
+            <article class="report card" id="report">
+              <div class="card-body">
+                <header class="report-header">
+                  <h1>网络安全保险损失核算报告</h1>
+                  <p class="text-secondary mb-0">基于赔付科目表 · 理赔核算器</p>
+                </header>
+
+                <section class="report-section">
+                  <h2>一、案件概况</h2>
+                  <table class="table table-vcenter report-table">
+                    <tbody>
+                      <tr><th>案件编号</th><td id="rpt-case-id">—</td></tr>
+                      <tr><th>案件名称</th><td id="rpt-case-name">—</td></tr>
+                      <tr><th>核算日期</th><td id="rpt-calc-date">—</td></tr>
+                      <tr><th>案件基础类型</th><td id="rpt-case-type">—</td></tr>
+                      <tr><th>已选损失模块</th><td id="rpt-modules">—</td></tr>
+                    </tbody>
+                  </table>
+                </section>
+
+                <section class="report-section">
+                  <h2>二、核心计算结果</h2>
+                  <div class="row g-3 report-kpis">
+                    <div class="col-md-4">
+                      <div class="kpi kpi-primary">
+                        <div class="kpi-label">净核定损失</div>
+                        <div class="kpi-value" id="rpt-net">—</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="kpi">
+                        <div class="kpi-label">计入核定损失合计</div>
+                        <div class="kpi-value" id="rpt-covered">—</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="kpi">
+                        <div class="kpi-label">SLA 抵扣</div>
+                        <div class="kpi-value" id="rpt-sla">—</div>
+                      </div>
+                    </div>
+                  </div>
+                  <ul class="mt-3 mb-0">
+                    <li>间接损失口径小计：<strong id="rpt-indirect">—</strong></li>
+                    <li>直接损失口径小计：<strong id="rpt-direct">—</strong></li>
+                    <li>事实口径核定总损失：<strong id="rpt-fact">—</strong></li>
+                  </ul>
+                </section>
+
+                <section class="report-section">
+                  <h2>三、分模块结果</h2>
+                  <div class="table-responsive">
+                    <table class="table table-striped report-table" id="rpt-module-table">
+                      <thead>
+                        <tr>
+                          <th>模块</th>
+                          <th>名称</th>
+                          <th class="text-end">核定损失小计</th>
+                          <th class="text-end">计入金额</th>
+                          <th class="text-end">已填科目数</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </section>
+
+                <section class="report-section">
+                  <h2>四、计算模式与关键参数摘要</h2>
+                  <table class="table report-table">
+                    <tbody>
+                      <tr><th>营业中断测法</th><td id="rpt-s1-method">—</td></tr>
+                      <tr><th>已获 SLA 赔偿</th><td id="rpt-sla-input">—</td></tr>
+                      <tr><th>关键参数摘录</th><td id="rpt-key-params">—</td></tr>
+                    </tbody>
+                  </table>
+                </section>
+
+                <section class="report-section">
+                  <h2>五、口径说明</h2>
+                  <p class="report-note" id="rpt-note"></p>
+                </section>
+              </div>
+            </article>
+          </section>
+        </div>
+      </div>
+
+      <footer class="footer footer-transparent d-print-none">
+        <div class="container-xl">
+          <div class="d-flex justify-content-between text-secondary">
+            <span id="status">就绪</span>
+            <span id="net-pill">净核定损失：—</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <div id="tip-layer" class="tip-layer d-none"></div>
+  <script src="vendor/tabler/tabler.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
