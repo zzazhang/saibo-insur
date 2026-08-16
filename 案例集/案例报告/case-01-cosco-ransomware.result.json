@@ -36,19 +36,19 @@
       "hint": "工时须签到表佐证",
       "params": {
         "p1": 120.0,
-        "p2": 1500.0
+        "p2": 1524.0
       },
       "voucher": 0.0,
       "include": "ON",
-      "assessed_loss": 180000.0,
-      "covered_amount": 180000.0,
+      "assessed_loss": 182880.0,
+      "covered_amount": 182880.0,
       "coverage_status": "covered",
       "coverage_label": "承保",
       "coverage_clause": "第七条 应急响应服务",
       "coverage_note": "以服务包形式给付，须立即通知指定专业服务机构并在24小时内通知保险人",
       "include_override": false,
       "category_switch": "ON",
-      "effective_covered": 180000.0
+      "effective_covered": 182880.0
     },
     {
       "code": "F1-02",
@@ -58,19 +58,19 @@
       "hint": "Panel Vendor须事先书面同意",
       "params": {
         "p1": 80.0,
-        "p2": 1200.0
+        "p2": 1219.0
       },
       "voucher": 0.0,
       "include": "ON",
-      "assessed_loss": 96000.0,
-      "covered_amount": 96000.0,
+      "assessed_loss": 97520.0,
+      "covered_amount": 97520.0,
       "coverage_status": "limited",
       "coverage_label": "有限承保",
       "coverage_clause": "第七条",
       "coverage_note": "应急响应服务内含初步排查，独立取证鉴定未单列",
       "include_override": false,
       "category_switch": "ON",
-      "effective_covered": 96000.0
+      "effective_covered": 97520.0
     },
     {
       "code": "F1-03",
@@ -257,19 +257,19 @@
       "hint": "违规场景须证非故意",
       "params": {
         "p1": 320.0,
-        "p2": 800.0
+        "p2": 762.0
       },
       "voucher": 0.0,
       "include": "ON",
-      "assessed_loss": 256000.0,
-      "covered_amount": 256000.0,
+      "assessed_loss": 243840.0,
+      "covered_amount": 243840.0,
       "coverage_status": "covered",
       "coverage_label": "承保",
       "coverage_clause": "第七条 主机及系统数据库加固服务",
       "coverage_note": null,
       "include_override": false,
       "category_switch": "ON",
-      "effective_covered": 256000.0
+      "effective_covered": 243840.0
     },
     {
       "code": "F2-02",
@@ -279,19 +279,19 @@
       "hint": "附清理验收单",
       "params": {
         "p1": 60.0,
-        "p2": 800.0
+        "p2": 762.0
       },
       "voucher": 0.0,
       "include": "ON",
-      "assessed_loss": 48000.0,
-      "covered_amount": 48000.0,
+      "assessed_loss": 45720.0,
+      "covered_amount": 45720.0,
       "coverage_status": "covered",
       "coverage_label": "承保",
       "coverage_clause": "第七条",
       "coverage_note": null,
       "include_override": false,
       "category_switch": "ON",
-      "effective_covered": 48000.0
+      "effective_covered": 45720.0
     },
     {
       "code": "F2-03",
@@ -323,19 +323,19 @@
       "hint": "从运维记录提取",
       "params": {
         "p1": 90.0,
-        "p2": 800.0
+        "p2": 762.0
       },
       "voucher": 0.0,
       "include": "ON",
-      "assessed_loss": 72000.0,
-      "covered_amount": 72000.0,
+      "assessed_loss": 68580.0,
+      "covered_amount": 68580.0,
       "coverage_status": "limited",
       "coverage_label": "有限承保",
       "coverage_clause": "第七条",
       "coverage_note": null,
       "include_override": false,
       "category_switch": "ON",
-      "effective_covered": 72000.0
+      "effective_covered": 68580.0
     },
     {
       "code": "F2-05",
@@ -495,20 +495,20 @@
         "p1": 8.0,
         "p2": 15.0,
         "p3": 24.0,
-        "p4": 800.0,
+        "p4": 762.0,
         "p5": 1.5
       },
       "voucher": 0.0,
       "include": "ON",
-      "assessed_loss": 103200.0,
-      "covered_amount": 103200.0,
+      "assessed_loss": 98298.0,
+      "covered_amount": 98298.0,
       "coverage_status": "covered",
       "coverage_label": "承保",
       "coverage_clause": "第七条 代码安全加固服务",
       "coverage_note": null,
       "include_override": false,
       "category_switch": "ON",
-      "effective_covered": 103200.0
+      "effective_covered": 98298.0
     },
     {
       "code": "F3-02",
@@ -1478,24 +1478,24 @@
       "code": "F1",
       "name": "事件响应与调查取证费",
       "switch": "ON",
-      "assessed_subtotal": 306000.0,
-      "covered_subtotal": 276000.0,
+      "assessed_subtotal": 310400.0,
+      "covered_subtotal": 280400.0,
       "filled_count": 3
     },
     {
       "code": "F2",
       "name": "系统与数据恢复重建费",
       "switch": "ON",
-      "assessed_subtotal": 496000.0,
-      "covered_subtotal": 496000.0,
+      "assessed_subtotal": 478140.0,
+      "covered_subtotal": 478140.0,
       "filled_count": 4
     },
     {
       "code": "F3",
       "name": "整改加固与漏洞修复费",
       "switch": "ON",
-      "assessed_subtotal": 283200.0,
-      "covered_subtotal": 283200.0,
+      "assessed_subtotal": 278298.0,
+      "covered_subtotal": 278298.0,
       "filled_count": 2
     },
     {
@@ -1600,8 +1600,8 @@
     "policy_id": "cosco-emergency-service",
     "policy_name": "中远海运网络安全应急响应服务保险",
     "insurer": "中远海运财产保险自保",
-    "covered_total": 1265200.0,
-    "base_total": 1265200.0,
+    "covered_total": 1246838.0,
+    "base_total": 1246838.0,
     "after_sublimits": 1150000.0,
     "deductible_amount": 110000.0,
     "deductible_applied": 110000.0,
@@ -1609,26 +1609,26 @@
     "aggregate_limit": 3000000.0,
     "aggregate_cut": 0.0,
     "payable": 1040000.0,
-    "self_retention": 1674200.0,
-    "payout_ratio_vs_fact": 0.38316999484194236,
-    "payout_ratio_vs_covered": 0.8220044261776794,
+    "self_retention": 1655838.0,
+    "payout_ratio_vs_fact": 0.38577985769174555,
+    "payout_ratio_vs_covered": 0.8341099645663671,
     "steps": [
       {
         "step": "计入金额（承保过滤后）",
-        "amount": 1265200.0,
+        "amount": 1246838.0,
         "delta": 0.0,
         "note": "第②层结果"
       },
       {
         "step": "营业中断按保单口径重算 + SLA 抵扣",
-        "amount": 1265200.0,
+        "amount": 1246838.0,
         "delta": 0.0,
         "note": "BI 口径：waiting_only；自留 0；SLA 抵扣 0"
       },
       {
         "step": "分项限额裁剪",
         "amount": 1150000.0,
-        "delta": -115200.0,
+        "delta": -96838.0,
         "note": "触顶 1 个分项组"
       },
       {
@@ -1650,9 +1650,9 @@
           "F7"
         ],
         "limit": 1000000.0,
-        "before": 1115200.0,
+        "before": 1096838.0,
         "after": 1000000.0,
-        "cut": 115200.0,
+        "cut": 96838.0,
         "shares_aggregate": false
       },
       {
@@ -1719,12 +1719,12 @@
     ]
   },
   "summary": {
-    "covered_total": 1265200.0,
+    "covered_total": 1246838.0,
     "sla_deduction": -0.0,
-    "net_assessed_loss": 1265200.0,
+    "net_assessed_loss": 1246838.0,
     "indirect_subtotal": 0.0,
-    "direct_subtotal": 1265200.0,
-    "fact_total": 2714200.0,
+    "direct_subtotal": 1246838.0,
+    "fact_total": 2695838.0,
     "payable": 1040000.0,
     "settlement_applied": true
   },

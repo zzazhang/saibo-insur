@@ -376,7 +376,7 @@ class TestCase01Counterfactual(unittest.TestCase):
         r = compute(case_io.strip_to_compute(case_io.load_case("case-01-cosco-ransomware")))
         by = {i["code"]: i for i in r["items"]}
         self.assertEqual(by["S1-01"]["coverage_status"], "unmapped")
-        self.assertEqual(by["S1-01"]["assessed_loss"], 1134000.0)
+        self.assertEqual(by["S1-01"]["assessed_loss"], 1134000.0)  # BI 不含工时费率，未受重算影响
         self.assertEqual(r["settlement"]["bi"]["gross"], 0.0)
 
     def test_conditional_deductible_triggered(self):
@@ -445,8 +445,16 @@ class TestParameterSources(unittest.TestCase):
         """本土化原则：工时类科目挂靠的必须是国标，不是国际报告。"""
         gb = psrc.get_source("gbt-42461-2023")
         self.assertEqual(gb["priority"], "primary_domestic")
-        for ref in ("sec-service-rate-senior", "sec-service-rate-mid"):
-            self.assertEqual(psrc.get_parameter(ref)["source_id"], "gbt-42461-2023")
+        for ref in ("gbt42461-rate-expert", "gbt42461-rate-senior",
+                    "gbt42461-rate-mid", "gbt42461-rate-junior"):
+            param = psrc.get_parameter(ref)
+            self.assertEqual(param["source_id"], "gbt-42461-2023")
+            self.assertEqual(param["confidence"], "verified")
+        # 市场加成系数是国标之外的假设，必须如实标为 assumed
+        markup = psrc.get_parameter("market-markup-emergency")
+        self.assertEqual(markup["confidence"], "assumed")
+        self.assertIsNone(markup["source_id"])
+        self.assertIn("循环", markup["note"])
         for ref in ("ibm-cost-data-breach-2025", "sophos-ransomware-2025"):
             self.assertEqual(psrc.get_source(ref)["priority"], "international_benchmark")
             self.assertIn("caveat", psrc.get_source(ref))

@@ -25,8 +25,9 @@
       ],
       "method": "人力成本 L = Σ(Pᵢ × Qᵢ)，其中 Pᵢ 为第 i 级服务人员成本单价（元/人日），Qᵢ 为该级别总体工作量（人日）。人员日平均工资 S = 年平均工资 AS ÷ 年工作天数，每月工作天数取 20.67（依人社部发〔2025〕2 号）。再乘以人员级别调整系数 Kᵢ（分 4 级）与人力成本调整系数 H。",
       "update_mechanism": "中国网络安全产业联盟（CCIA）每年依据国家统计局各省市「信息传输、软件和信息技术服务业」平均工资更新各省市各级别成本单价，以《网络安全服务成本度量实施参考》形式发布",
-      "verification_status": "method_verified_values_pending",
-      "caveat": "本项目已确认标准的计算方法与更新机制，但尚未取得标准附录 A 的分省市单价表原文，也未取得 CCIA 年度附件。案例中所有引用该标准的单价均标为pending 或 derived，须以原始文件核对后方可对外引用。"
+      "verification_status": "verified",
+      "caveat": "标准第 1 章明确「本文件中的网络安全服务成本不包含利润」。理赔核定的是被保险人实际支付的服务价格，等于成本乘以市场加成系数，该系数国标不提供，须另行假设并标注。",
+      "table_a1_note": "表 A.1 为 2021 年各省市各级别单价（基于统计局 2020 年平均工资），示例取 Kᵢ 各档最高值与 H=0.7。本项目已用公式 3 逐省复核，31 个省市 × 4 个级别全部吻合，误差不超过 2 元。"
     },
     {
       "id": "gbt-20986-2023",
@@ -94,52 +95,89 @@
   ],
   "parameters": [
     {
-      "id": "sec-service-rate-senior",
-      "label": "网络安全服务人员费率·高级/专家级",
-      "unit": "元/小时",
+      "id": "gbt42461-rate-expert",
+      "label": "网络安全服务人员成本单价·专家/资深级（K₁）",
+      "unit": "元/人日",
       "source_id": "gbt-42461-2023",
-      "confidence": "pending",
-      "point": null,
-      "range": null,
-      "applies_to": [
-        "F1-01.p2",
-        "F1-02.p2"
+      "confidence": "verified",
+      "table": "GB/T 42461-2023 表 A.1，按被保险人所在省市取值",
+      "range": [
+        2743,
+        9203
       ],
-      "derivation": "国标口径为元/人日，本工具 catalog 的费率参数单位为元/小时，换算按 1 人日 = 8 小时。取值 = Pᵢ(高级/专家级，按被保险人所在省份) ÷ 8。",
-      "action_required": "需取得 GB/T 42461-2023 附录 A 或 CCIA《年度网络安全服务成本度量实施参考》附件中被保险人所在省份的对应级别单价"
+      "applies_to": [
+        "F1-01.p2"
+      ],
+      "note": "全国区间：黑龙江 2,743 至 上海 9,203 元/人日。折元/小时按 1 人日 = 8 小时。"
     },
     {
-      "id": "sec-service-rate-mid",
-      "label": "网络安全服务人员费率·中级",
-      "unit": "元/小时",
+      "id": "gbt42461-rate-senior",
+      "label": "网络安全服务人员成本单价·高级（K₂）",
+      "unit": "元/人日",
       "source_id": "gbt-42461-2023",
-      "confidence": "pending",
-      "point": null,
-      "range": null,
+      "confidence": "verified",
+      "table": "GB/T 42461-2023 表 A.1",
+      "range": [
+        2195,
+        7362
+      ],
+      "applies_to": [
+        "F1-02.p2"
+      ],
+      "note": "全国区间：黑龙江 2,195 至 上海 7,362 元/人日。"
+    },
+    {
+      "id": "gbt42461-rate-mid",
+      "label": "网络安全服务人员成本单价·中级（K₃）",
+      "unit": "元/人日",
+      "source_id": "gbt-42461-2023",
+      "confidence": "verified",
+      "table": "GB/T 42461-2023 表 A.1",
+      "range": [
+        1372,
+        4601
+      ],
       "applies_to": [
         "F2-01.p2",
         "F2-02.p2",
         "F2-04.p2",
         "F3-01.p4"
       ],
-      "derivation": "同上，取中级单价 ÷ 8",
-      "action_required": "同 sec-service-rate-senior"
+      "note": "全国区间：黑龙江 1,372 至 上海 4,601 元/人日。"
     },
     {
-      "id": "sec-service-monthly-wage-anchor",
-      "label": "信息传输、软件和信息技术服务业月平均工资（省际锚点）",
-      "unit": "元/月",
+      "id": "gbt42461-rate-junior",
+      "label": "网络安全服务人员成本单价·一般（K₄）",
+      "unit": "元/人日",
       "source_id": "gbt-42461-2023",
-      "confidence": "derived",
+      "confidence": "verified",
+      "table": "GB/T 42461-2023 表 A.1",
       "range": [
-        10300,
-        36300
+        686,
+        2301
+      ],
+      "applies_to": [],
+      "note": "全国区间：黑龙江 686 至 上海 2,301 元/人日。"
+    },
+    {
+      "id": "market-markup-emergency",
+      "label": "应急服务市场加成系数（成本 → 实际支付价格）",
+      "unit": "倍",
+      "source_id": null,
+      "confidence": "assumed",
+      "point": 2.2,
+      "range": [
+        1.5,
+        3.0
       ],
       "applies_to": [
-        "*"
+        "F1",
+        "F2",
+        "F3",
+        "F7"
       ],
-      "derivation": "据 CCIA 2025 年度实施参考的公开转述：省际最高为上海约 36.3 千元/月，最低为黑龙江约 10.3 千元/月。日均工资 S = 月工资 ÷ 20.67。",
-      "action_required": "该区间为二手转述，须以 CCIA 原始附件核对；各级别成本单价还需再乘级别调整系数 Kᵢ 与人力成本调整系数 H"
+      "derivation": "GB/T 42461-2023 第 1 章明确其成本口径不含利润，而理赔核定的是被保险人实际支付的服务价格，二者之差即服务商利润与应急溢价。实际费率 = 表 A.1 对应级别单价 × 本系数 ÷ 8（折元/小时）。",
+      "note": "**此参数为假设，待数据检验。** 区间 1.5~3.0，点估计 2.2。\n\n必须说明的循环性问题：2.2 这个点估计是由本项目 CASE-01 早期的编者估计费率反推得出的（估计值 ÷ 表 A.1 单价 ÷ 8 ≈ 2.2）。因此「按国标重算后与原估计接近」不构成任何验证，只是把同一个未经检验的判断换了个位置存放。真正有内容的是区间 1.5~3.0 与「成本不含利润」这一结构性事实，点估计本身仍待真实理赔单据或服务商公开报价单校准。\n\n该系数是费率类参数中唯一需要假设的一个——国标把「分省分级单价」这一层固定住之后，假设对象从 6 个费率数字收敛为 1 个系数。收敛本身是进步（可解释性提升、敏感性分析只需扫一个维度），但不等于该系数已被证实。"
     },
     {
       "id": "ransomware-recovery-days",
@@ -200,5 +238,689 @@
       "applies_to": [],
       "note": "用于标记所有由编者按量级设定、暂无外部出处的参数。凡引用该标记的参数，案例中必须显著声明，且不得用于对外结论。"
     }
-  ]
+  ],
+  "gbt42461_rate_table": {
+    "北京市": {
+      "年平均工资": 259729,
+      "日平均工资": 1039,
+      "levels": {
+        "一般": {
+          "per_person_day": 2208,
+          "per_hour": 276.0
+        },
+        "中级": {
+          "per_person_day": 4416,
+          "per_hour": 552.0
+        },
+        "高级": {
+          "per_person_day": 7066,
+          "per_hour": 883.2
+        },
+        "专家": {
+          "per_person_day": 8832,
+          "per_hour": 1104.0
+        }
+      }
+    },
+    "天津市": {
+      "年平均工资": 146977,
+      "日平均工资": 588,
+      "levels": {
+        "一般": {
+          "per_person_day": 1250,
+          "per_hour": 156.2
+        },
+        "中级": {
+          "per_person_day": 2499,
+          "per_hour": 312.4
+        },
+        "高级": {
+          "per_person_day": 3998,
+          "per_hour": 499.8
+        },
+        "专家": {
+          "per_person_day": 4998,
+          "per_hour": 624.8
+        }
+      }
+    },
+    "河北省": {
+      "年平均工资": 100220,
+      "日平均工资": 401,
+      "levels": {
+        "一般": {
+          "per_person_day": 852,
+          "per_hour": 106.5
+        },
+        "中级": {
+          "per_person_day": 1704,
+          "per_hour": 213.0
+        },
+        "高级": {
+          "per_person_day": 2726,
+          "per_hour": 340.8
+        },
+        "专家": {
+          "per_person_day": 3408,
+          "per_hour": 426.0
+        }
+      }
+    },
+    "山西省": {
+      "年平均工资": 90594,
+      "日平均工资": 362,
+      "levels": {
+        "一般": {
+          "per_person_day": 770,
+          "per_hour": 96.2
+        },
+        "中级": {
+          "per_person_day": 1540,
+          "per_hour": 192.5
+        },
+        "高级": {
+          "per_person_day": 2465,
+          "per_hour": 308.1
+        },
+        "专家": {
+          "per_person_day": 3081,
+          "per_hour": 385.1
+        }
+      }
+    },
+    "内蒙古自治区": {
+      "年平均工资": 104563,
+      "日平均工资": 418,
+      "levels": {
+        "一般": {
+          "per_person_day": 889,
+          "per_hour": 111.1
+        },
+        "中级": {
+          "per_person_day": 1778,
+          "per_hour": 222.2
+        },
+        "高级": {
+          "per_person_day": 2845,
+          "per_hour": 355.6
+        },
+        "专家": {
+          "per_person_day": 3556,
+          "per_hour": 444.5
+        }
+      }
+    },
+    "辽宁省": {
+      "年平均工资": 113412,
+      "日平均工资": 454,
+      "levels": {
+        "一般": {
+          "per_person_day": 964,
+          "per_hour": 120.5
+        },
+        "中级": {
+          "per_person_day": 1928,
+          "per_hour": 241.0
+        },
+        "高级": {
+          "per_person_day": 3085,
+          "per_hour": 385.6
+        },
+        "专家": {
+          "per_person_day": 3857,
+          "per_hour": 482.1
+        }
+      }
+    },
+    "吉林省": {
+      "年平均工资": 81754,
+      "日平均工资": 327,
+      "levels": {
+        "一般": {
+          "per_person_day": 695,
+          "per_hour": 86.9
+        },
+        "中级": {
+          "per_person_day": 1390,
+          "per_hour": 173.8
+        },
+        "高级": {
+          "per_person_day": 2224,
+          "per_hour": 278.0
+        },
+        "专家": {
+          "per_person_day": 2780,
+          "per_hour": 347.5
+        }
+      }
+    },
+    "黑龙江省": {
+      "年平均工资": 80673,
+      "日平均工资": 323,
+      "levels": {
+        "一般": {
+          "per_person_day": 686,
+          "per_hour": 85.8
+        },
+        "中级": {
+          "per_person_day": 1372,
+          "per_hour": 171.5
+        },
+        "高级": {
+          "per_person_day": 2195,
+          "per_hour": 274.4
+        },
+        "专家": {
+          "per_person_day": 2743,
+          "per_hour": 342.9
+        }
+      }
+    },
+    "上海市": {
+      "年平均工资": 270619,
+      "日平均工资": 1083,
+      "levels": {
+        "一般": {
+          "per_person_day": 2301,
+          "per_hour": 287.6
+        },
+        "中级": {
+          "per_person_day": 4601,
+          "per_hour": 575.1
+        },
+        "高级": {
+          "per_person_day": 7362,
+          "per_hour": 920.2
+        },
+        "专家": {
+          "per_person_day": 9203,
+          "per_hour": 1150.4
+        }
+      }
+    },
+    "江苏省": {
+      "年平均工资": 162939,
+      "日平均工资": 652,
+      "levels": {
+        "一般": {
+          "per_person_day": 1385,
+          "per_hour": 173.1
+        },
+        "中级": {
+          "per_person_day": 2770,
+          "per_hour": 346.2
+        },
+        "高级": {
+          "per_person_day": 4433,
+          "per_hour": 554.1
+        },
+        "专家": {
+          "per_person_day": 5541,
+          "per_hour": 692.6
+        }
+      }
+    },
+    "浙江省": {
+      "年平均工资": 235430,
+      "日平均工资": 942,
+      "levels": {
+        "一般": {
+          "per_person_day": 2001,
+          "per_hour": 250.1
+        },
+        "中级": {
+          "per_person_day": 4003,
+          "per_hour": 500.4
+        },
+        "高级": {
+          "per_person_day": 6405,
+          "per_hour": 800.6
+        },
+        "专家": {
+          "per_person_day": 8006,
+          "per_hour": 1000.8
+        }
+      }
+    },
+    "安徽省": {
+      "年平均工资": 101715,
+      "日平均工资": 407,
+      "levels": {
+        "一般": {
+          "per_person_day": 865,
+          "per_hour": 108.1
+        },
+        "中级": {
+          "per_person_day": 1729,
+          "per_hour": 216.1
+        },
+        "高级": {
+          "per_person_day": 2767,
+          "per_hour": 345.9
+        },
+        "专家": {
+          "per_person_day": 3459,
+          "per_hour": 432.4
+        }
+      }
+    },
+    "福建省": {
+      "年平均工资": 131811,
+      "日平均工资": 527,
+      "levels": {
+        "一般": {
+          "per_person_day": 1121,
+          "per_hour": 140.1
+        },
+        "中级": {
+          "per_person_day": 2241,
+          "per_hour": 280.1
+        },
+        "高级": {
+          "per_person_day": 3586,
+          "per_hour": 448.2
+        },
+        "专家": {
+          "per_person_day": 4482,
+          "per_hour": 560.2
+        }
+      }
+    },
+    "江西省": {
+      "年平均工资": 95779,
+      "日平均工资": 383,
+      "levels": {
+        "一般": {
+          "per_person_day": 814,
+          "per_hour": 101.8
+        },
+        "中级": {
+          "per_person_day": 1629,
+          "per_hour": 203.6
+        },
+        "高级": {
+          "per_person_day": 2606,
+          "per_hour": 325.8
+        },
+        "专家": {
+          "per_person_day": 3257,
+          "per_hour": 407.1
+        }
+      }
+    },
+    "山东省": {
+      "年平均工资": 105284,
+      "日平均工资": 421,
+      "levels": {
+        "一般": {
+          "per_person_day": 895,
+          "per_hour": 111.9
+        },
+        "中级": {
+          "per_person_day": 1790,
+          "per_hour": 223.8
+        },
+        "高级": {
+          "per_person_day": 2864,
+          "per_hour": 358.0
+        },
+        "专家": {
+          "per_person_day": 3580,
+          "per_hour": 447.5
+        }
+      }
+    },
+    "河南省": {
+      "年平均工资": 83900,
+      "日平均工资": 336,
+      "levels": {
+        "一般": {
+          "per_person_day": 713,
+          "per_hour": 89.1
+        },
+        "中级": {
+          "per_person_day": 1427,
+          "per_hour": 178.4
+        },
+        "高级": {
+          "per_person_day": 2282,
+          "per_hour": 285.2
+        },
+        "专家": {
+          "per_person_day": 2853,
+          "per_hour": 356.6
+        }
+      }
+    },
+    "湖北省": {
+      "年平均工资": 114162,
+      "日平均工资": 457,
+      "levels": {
+        "一般": {
+          "per_person_day": 971,
+          "per_hour": 121.4
+        },
+        "中级": {
+          "per_person_day": 1941,
+          "per_hour": 242.6
+        },
+        "高级": {
+          "per_person_day": 3106,
+          "per_hour": 388.2
+        },
+        "专家": {
+          "per_person_day": 3882,
+          "per_hour": 485.2
+        }
+      }
+    },
+    "湖南省": {
+      "年平均工资": 107317,
+      "日平均工资": 429,
+      "levels": {
+        "一般": {
+          "per_person_day": 912,
+          "per_hour": 114.0
+        },
+        "中级": {
+          "per_person_day": 1825,
+          "per_hour": 228.1
+        },
+        "高级": {
+          "per_person_day": 2919,
+          "per_hour": 364.9
+        },
+        "专家": {
+          "per_person_day": 3649,
+          "per_hour": 456.1
+        }
+      }
+    },
+    "广东省": {
+      "年平均工资": 193867,
+      "日平均工资": 776,
+      "levels": {
+        "一般": {
+          "per_person_day": 1648,
+          "per_hour": 206.0
+        },
+        "中级": {
+          "per_person_day": 3296,
+          "per_hour": 412.0
+        },
+        "高级": {
+          "per_person_day": 5274,
+          "per_hour": 659.2
+        },
+        "专家": {
+          "per_person_day": 6593,
+          "per_hour": 824.1
+        }
+      }
+    },
+    "广西壮族自治区": {
+      "年平均工资": 101642,
+      "日平均工资": 407,
+      "levels": {
+        "一般": {
+          "per_person_day": 864,
+          "per_hour": 108.0
+        },
+        "中级": {
+          "per_person_day": 1728,
+          "per_hour": 216.0
+        },
+        "高级": {
+          "per_person_day": 2765,
+          "per_hour": 345.6
+        },
+        "专家": {
+          "per_person_day": 3456,
+          "per_hour": 432.0
+        }
+      }
+    },
+    "海南省": {
+      "年平均工资": 146342,
+      "日平均工资": 585,
+      "levels": {
+        "一般": {
+          "per_person_day": 1244,
+          "per_hour": 155.5
+        },
+        "中级": {
+          "per_person_day": 2488,
+          "per_hour": 311.0
+        },
+        "高级": {
+          "per_person_day": 3981,
+          "per_hour": 497.6
+        },
+        "专家": {
+          "per_person_day": 4976,
+          "per_hour": 622.0
+        }
+      }
+    },
+    "重庆市": {
+      "年平均工资": 137276,
+      "日平均工资": 549,
+      "levels": {
+        "一般": {
+          "per_person_day": 1167,
+          "per_hour": 145.9
+        },
+        "中级": {
+          "per_person_day": 2334,
+          "per_hour": 291.8
+        },
+        "高级": {
+          "per_person_day": 3735,
+          "per_hour": 466.9
+        },
+        "专家": {
+          "per_person_day": 4668,
+          "per_hour": 583.5
+        }
+      }
+    },
+    "四川省": {
+      "年平均工资": 128891,
+      "日平均工资": 516,
+      "levels": {
+        "一般": {
+          "per_person_day": 1096,
+          "per_hour": 137.0
+        },
+        "中级": {
+          "per_person_day": 2191,
+          "per_hour": 273.9
+        },
+        "高级": {
+          "per_person_day": 3506,
+          "per_hour": 438.2
+        },
+        "专家": {
+          "per_person_day": 4383,
+          "per_hour": 547.9
+        }
+      }
+    },
+    "贵州省": {
+      "年平均工资": 111635,
+      "日平均工资": 447,
+      "levels": {
+        "一般": {
+          "per_person_day": 949,
+          "per_hour": 118.6
+        },
+        "中级": {
+          "per_person_day": 1898,
+          "per_hour": 237.2
+        },
+        "高级": {
+          "per_person_day": 3037,
+          "per_hour": 379.6
+        },
+        "专家": {
+          "per_person_day": 3796,
+          "per_hour": 474.5
+        }
+      }
+    },
+    "云南省": {
+      "年平均工资": 105698,
+      "日平均工资": 423,
+      "levels": {
+        "一般": {
+          "per_person_day": 899,
+          "per_hour": 112.4
+        },
+        "中级": {
+          "per_person_day": 1797,
+          "per_hour": 224.6
+        },
+        "高级": {
+          "per_person_day": 2875,
+          "per_hour": 359.4
+        },
+        "专家": {
+          "per_person_day": 3594,
+          "per_hour": 449.2
+        }
+      }
+    },
+    "西藏自治区": {
+      "年平均工资": 142827,
+      "日平均工资": 571,
+      "levels": {
+        "一般": {
+          "per_person_day": 1214,
+          "per_hour": 151.8
+        },
+        "中级": {
+          "per_person_day": 2428,
+          "per_hour": 303.5
+        },
+        "高级": {
+          "per_person_day": 3886,
+          "per_hour": 485.8
+        },
+        "专家": {
+          "per_person_day": 4857,
+          "per_hour": 607.1
+        }
+      }
+    },
+    "陕西省": {
+      "年平均工资": 160066,
+      "日平均工资": 640,
+      "levels": {
+        "一般": {
+          "per_person_day": 1361,
+          "per_hour": 170.1
+        },
+        "中级": {
+          "per_person_day": 2722,
+          "per_hour": 340.2
+        },
+        "高级": {
+          "per_person_day": 4354,
+          "per_hour": 544.2
+        },
+        "专家": {
+          "per_person_day": 5443,
+          "per_hour": 680.4
+        }
+      }
+    },
+    "甘肃省": {
+      "年平均工资": 85034,
+      "日平均工资": 340,
+      "levels": {
+        "一般": {
+          "per_person_day": 723,
+          "per_hour": 90.4
+        },
+        "中级": {
+          "per_person_day": 1446,
+          "per_hour": 180.8
+        },
+        "高级": {
+          "per_person_day": 2313,
+          "per_hour": 289.1
+        },
+        "专家": {
+          "per_person_day": 2892,
+          "per_hour": 361.5
+        }
+      }
+    },
+    "青海省": {
+      "年平均工资": 125531,
+      "日平均工资": 502,
+      "levels": {
+        "一般": {
+          "per_person_day": 1067,
+          "per_hour": 133.4
+        },
+        "中级": {
+          "per_person_day": 2134,
+          "per_hour": 266.8
+        },
+        "高级": {
+          "per_person_day": 3415,
+          "per_hour": 426.9
+        },
+        "专家": {
+          "per_person_day": 4269,
+          "per_hour": 533.6
+        }
+      }
+    },
+    "宁夏回族自治区": {
+      "年平均工资": 121971,
+      "日平均工资": 488,
+      "levels": {
+        "一般": {
+          "per_person_day": 1037,
+          "per_hour": 129.6
+        },
+        "中级": {
+          "per_person_day": 2074,
+          "per_hour": 259.2
+        },
+        "高级": {
+          "per_person_day": 3318,
+          "per_hour": 414.8
+        },
+        "专家": {
+          "per_person_day": 4148,
+          "per_hour": 518.5
+        }
+      }
+    },
+    "新疆维吾尔自治区（含建设兵团）": {
+      "年平均工资": 108429,
+      "日平均工资": 434,
+      "levels": {
+        "一般": {
+          "per_person_day": 922,
+          "per_hour": 115.2
+        },
+        "中级": {
+          "per_person_day": 1844,
+          "per_hour": 230.5
+        },
+        "高级": {
+          "per_person_day": 2950,
+          "per_hour": 368.8
+        },
+        "专家": {
+          "per_person_day": 3687,
+          "per_hour": 460.9
+        }
+      }
+    }
+  }
 }
