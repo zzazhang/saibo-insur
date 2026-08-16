@@ -347,3 +347,69 @@ html, body.app-body {
   .kpi, .table { break-inside: avoid; }
   a[href]::after { content: none !important; }
 }
+
+/* ===== 保单 / 结算层 / 案例库（v3 新增） ===== */
+.policy-info {
+  border: 1px solid #dbe1e8;
+  border-left: 3px solid #4263eb;
+  border-radius: 6px;
+  padding: 12px 14px;
+  background: #f8fafc;
+}
+.policy-name { font-weight: 600; font-size: 15px; }
+.policy-sum { color: #626976; font-size: 13px; margin-top: 4px; line-height: 1.6; }
+.policy-table { width: 100%; margin-top: 10px; font-size: 13px; border-collapse: collapse; }
+.policy-table th {
+  text-align: left; font-weight: 500; color: #626976;
+  padding: 4px 12px 4px 0; white-space: nowrap; width: 1%;
+}
+.policy-table td { padding: 4px 18px 4px 0; }
+.policy-warn {
+  margin-top: 10px; padding: 8px 10px; border-radius: 5px;
+  background: #fff8e6; border: 1px solid #f0d9a0; color: #7a5c11; font-size: 12.5px;
+  line-height: 1.6;
+}
+.policy-note {
+  margin-top: 8px; font-size: 12.5px; color: #5c6470;
+  padding-left: 10px; border-left: 2px solid #cdd4dc; line-height: 1.6;
+}
+.policy-flags { border-top: 1px dashed #dbe1e8; padding-top: 12px; }
+.flags-title { font-size: 13px; color: #626976; margin-bottom: 6px; }
+
+/* 承保状态徽标 */
+.cov-badge {
+  display: inline-block; margin-left: 8px; padding: 1px 7px;
+  border-radius: 10px; font-size: 11px; font-weight: 500; vertical-align: middle;
+  cursor: help;
+}
+.cov-chip {
+  display: inline-block; margin: 4px 6px 0 0; padding: 2px 9px;
+  border-radius: 10px; font-size: 11.5px;
+}
+.cov-chips { margin-top: 8px; }
+.cov-ok      { background: #e6f5ea; color: #1a7f3c; }
+.cov-warn    { background: #fff3e0; color: #9a5b00; }
+.cov-no      { background: #fdeaea; color: #a52222; }
+.cov-nominal { background: #f0e8fb; color: #6a3bb0; }
+.cov-none    { background: #eef0f3; color: #6b7280; }
+
+/* 结算表格 */
+.delta-cut { color: #c0392b; }
+tr.row-cut { background: #fdf6f5; }
+#rpt-settlement-section h3 { font-size: 15px; margin-top: 18px; margin-bottom: 8px; }
+.kpi-sub { font-size: 12px; color: #7b818d; margin-top: 4px; line-height: 1.5; }
+
+/* 案例库 */
+.cases-list { display: flex; flex-direction: column; gap: 8px; }
+.case-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 8px 12px; border: 1px solid #e3e7ec; border-radius: 6px;
+  background: #fff;
+}
+.case-meta { display: flex; flex-direction: column; }
+.case-sub { font-size: 12px; color: #7b818d; margin-top: 2px; }
+
+/* 保单模式下计入下拉锁定 */
+.item-card select:disabled {
+  background: #f1f3f5; color: #6b7280; cursor: not-allowed;
+}

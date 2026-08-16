@@ -16,8 +16,12 @@
           <span class="badge bg-blue-lt ms-2">v2.0</span>
         </div>
         <div class="navbar-nav flex-row order-md-last gap-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-cases">案例库</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-import">导入案例</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-export">导出案例</button>
           <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-demo">加载演示案</button>
           <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-help">使用说明</button>
+          <input type="file" id="import-file" accept=".json,application/json" class="d-none" />
         </div>
       </div>
     </header>
@@ -39,6 +43,24 @@
             <div class="card-body help-body"></div>
           </aside>
           <div id="warnings" class="alert alert-warning d-none d-print-none" role="alert"></div>
+
+          <aside id="cases-panel" class="card mb-3 d-none d-print-none">
+            <div class="card-header">
+              <h3 class="card-title">案例库</h3>
+              <div class="card-actions">
+                <input id="case-save-name" class="form-control form-control-sm d-inline-block"
+                       style="width:220px" placeholder="文件名，如 case-01-taiping" />
+                <button type="button" class="btn btn-sm btn-primary" id="btn-case-save">保存当前案件</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="cases-list" class="cases-list">加载中…</div>
+              <div class="form-hint mt-2">
+                案例文件存放在项目的 <code>cases/</code> 目录，可直接用
+                <code>python -m claims_calc.cli run cases/*.json</code> 批量复现。
+              </div>
+            </div>
+          </aside>
 
           <!-- View 1: 案件及损失项选择 -->
           <section id="view-1" class="view" data-view="1">
@@ -67,6 +89,33 @@
                     <div class="form-hint">选择类型会预勾损失模块，仍可手工调整。</div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div class="card mb-3">
+              <div class="card-header">
+                <h3 class="card-title">投保产品</h3>
+                <div class="card-actions">
+                  <span class="form-hint mb-0">决定条款责任映射（第②层）与结算参数（第③层）</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-7">
+                    <label class="form-label">保单产品</label>
+                    <select id="policy-select" class="form-select"></select>
+                  </div>
+                  <div class="col-md-5">
+                    <label class="form-label">责任映射模式</label>
+                    <select id="coverage-mode" class="form-select">
+                      <option value="policy">按保单条款自动判定</option>
+                      <option value="manual">手工逐项设定</option>
+                    </select>
+                    <div class="form-hint">自动模式下各科目「计入」由条款责任映射决定。</div>
+                  </div>
+                </div>
+                <div id="policy-info" class="policy-info mt-3 d-none"></div>
+                <div id="policy-flags" class="policy-flags mt-3 d-none"></div>
               </div>
             </div>
 
@@ -130,6 +179,7 @@
               <h2 class="page-title mb-0">核算结果报告</h2>
               <div class="btn-list">
                 <button type="button" class="btn btn-outline-secondary" id="btn-prev-3">返回修改</button>
+                <button type="button" class="btn btn-outline-secondary" id="btn-export-md">导出 Markdown</button>
                 <button type="button" class="btn btn-primary" id="btn-print">打印 / 另存为 PDF</button>
               </div>
             </div>
@@ -149,6 +199,7 @@
                       <tr><th>案件名称</th><td id="rpt-case-name">—</td></tr>
                       <tr><th>核算日期</th><td id="rpt-calc-date">—</td></tr>
                       <tr><th>案件基础类型</th><td id="rpt-case-type">—</td></tr>
+                      <tr><th>投保产品</th><td id="rpt-policy">—</td></tr>
                       <tr><th>已选损失模块</th><td id="rpt-modules">—</td></tr>
                     </tbody>
                   </table>
@@ -158,24 +209,31 @@
                   <h2>二、核心计算结果</h2>
                   <div class="row g-3 report-kpis">
                     <div class="col-md-4">
-                      <div class="kpi kpi-primary">
-                        <div class="kpi-label">净核定损失</div>
-                        <div class="kpi-value" id="rpt-net">—</div>
+                      <div class="kpi">
+                        <div class="kpi-label">① 事实口径核定损失</div>
+                        <div class="kpi-value" id="rpt-fact-kpi">—</div>
+                        <div class="kpi-sub">事故实际损失，不看保单</div>
                       </div>
                     </div>
                     <div class="col-md-4">
                       <div class="kpi">
-                        <div class="kpi-label">计入核定损失合计</div>
+                        <div class="kpi-label">② 承保过滤计入金额</div>
                         <div class="kpi-value" id="rpt-covered">—</div>
+                        <div class="kpi-sub">属于本保单责任范围的部分</div>
                       </div>
                     </div>
                     <div class="col-md-4">
-                      <div class="kpi">
-                        <div class="kpi-label">SLA 抵扣</div>
-                        <div class="kpi-value" id="rpt-sla">—</div>
+                      <div class="kpi kpi-primary">
+                        <div class="kpi-label">③ 保单结算赔付额</div>
+                        <div class="kpi-value" id="rpt-payable">—</div>
+                        <div class="kpi-sub" id="rpt-payable-sub">扣减限额与免赔额后</div>
                       </div>
                     </div>
                   </div>
+                  <ul class="mt-3 mb-0">
+                    <li>净核定损失（含 SLA 抵扣）：<strong id="rpt-net">—</strong></li>
+                    <li>SLA 抵扣：<strong id="rpt-sla">—</strong></li>
+                  </ul>
                   <ul class="mt-3 mb-0">
                     <li>间接损失口径小计：<strong id="rpt-indirect">—</strong></li>
                     <li>直接损失口径小计：<strong id="rpt-direct">—</strong></li>
@@ -183,8 +241,44 @@
                   </ul>
                 </section>
 
+                <section class="report-section" id="rpt-settlement-section">
+                  <h2>三、保单结算过程</h2>
+                  <div id="rpt-policy-box" class="policy-info mb-3"></div>
+                  <div class="table-responsive">
+                    <table class="table report-table" id="rpt-steps-table">
+                      <thead>
+                        <tr>
+                          <th>步骤</th>
+                          <th class="text-end">余额</th>
+                          <th class="text-end">增减</th>
+                          <th>说明</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <h3 class="mt-3">分项限额适用情况</h3>
+                  <div class="table-responsive">
+                    <table class="table report-table" id="rpt-sublimit-table">
+                      <thead>
+                        <tr>
+                          <th>分项组</th>
+                          <th>条款依据</th>
+                          <th class="text-end">限额</th>
+                          <th class="text-end">裁剪前</th>
+                          <th class="text-end">裁剪后</th>
+                          <th class="text-end">削减</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <div id="rpt-bi-box" class="mt-3"></div>
+                  <div id="rpt-blocked-box" class="mt-3"></div>
+                </section>
+
                 <section class="report-section">
-                  <h2>三、分模块结果</h2>
+                  <h2>四、分模块结果</h2>
                   <div class="table-responsive">
                     <table class="table table-striped report-table" id="rpt-module-table">
                       <thead>
@@ -202,7 +296,7 @@
                 </section>
 
                 <section class="report-section">
-                  <h2>四、计算模式与关键参数摘要</h2>
+                  <h2>五、计算模式与关键参数摘要</h2>
                   <table class="table report-table">
                     <tbody>
                       <tr><th>营业中断测法</th><td id="rpt-s1-method">—</td></tr>
@@ -213,7 +307,7 @@
                 </section>
 
                 <section class="report-section">
-                  <h2>五、口径说明</h2>
+                  <h2>六、口径说明</h2>
                   <p class="report-note" id="rpt-note"></p>
                 </section>
               </div>

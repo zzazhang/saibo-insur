@@ -8,7 +8,7 @@ import os
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
-from . import coerce
+from . import coerce, policies, settlement
 from .formulas import assess_item
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -80,6 +80,20 @@ def compute(case: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     s1_method, _ = coerce.to_s1_method(case.get("s1_method"), warnings)
     sla = coerce.to_number(case.get("sla_compensation"), "sla_compensation", warnings)
 
+    # ---- 保单解析（第②/③层的依据）--------------------------------------
+    policy = case.get("policy")
+    if not policy:
+        policy = policies.get_policy(case.get("policy_id"))
+    if case.get("policy_id") and not policy:
+        warnings.append("未找到保单 %r，本次按无保单处理" % case.get("policy_id"))
+
+    coverage_mode = case.get("coverage_mode")
+    if not coverage_mode:
+        coverage_mode = "policy" if policy else "manual"
+    if coverage_mode == "policy" and not policy:
+        warnings.append("coverage_mode 为 policy 但未指定保单，已回退为 manual")
+        coverage_mode = "manual"
+
     extras = {"s1_method": s1_method}
     raw_items = case.get("items") or {}
     item_results: List[Dict[str, Any]] = []
@@ -105,7 +119,34 @@ def compute(case: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         if "legal_confirm" in item_input:
             merged["legal_confirm"] = item_input.get("legal_confirm")
 
+        # 保单模式：include 由条款责任映射决定；
+        # 除非该科目显式声明 include_override=true（用于案例中论证特约扩展等情形）
+        cov_meta = None
+        if policy:
+            cov_meta = policies.coverage_for(policy, code)
+        if coverage_mode == "policy" and cov_meta is not None:
+            if item_input.get("include_override"):
+                merged["include"] = item_input.get("include", "ON")
+            else:
+                merged["include"] = (
+                    "ON"
+                    if cov_meta.get("status") in policies.INCLUDING_STATUSES
+                    else "OFF"
+                )
+
         result = assess_item(meta, merged, extras, warnings)
+        if cov_meta is not None:
+            status = cov_meta.get("status", "unmapped")
+            result["coverage_status"] = status
+            result["coverage_label"] = policies.STATUS_LABELS.get(status, status)
+            result["coverage_clause"] = cov_meta.get("clause")
+            result["coverage_note"] = cov_meta.get("note")
+            result["include_override"] = bool(item_input.get("include_override"))
+            if result["include_override"]:
+                warnings.append(
+                    "%s 手工覆盖了保单责任映射（条款判定为%s，本案强制置为 %s）"
+                    % (code, result["coverage_label"], result["include"])
+                )
         item_results.append(result)
         by_code[code] = result
 
@@ -139,6 +180,13 @@ def compute(case: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
                 "filled_count": filled_count,
             }
         )
+        # 把大类开关下沉到明细，供结算层与前端使用（两级与关系）
+        for m in members:
+            m["category_switch"] = switch
+            m["effective_covered"] = (
+                m["covered_amount"] if switch == "ON" else 0.0
+            )
+
         covered_total += covered_subtotal
         fact_total += assessed_subtotal
         if code == "S1":
@@ -158,6 +206,32 @@ def compute(case: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         indirect += s103["assessed_loss"]
     direct = covered_total - indirect
 
+    # ---- 第③层：保单结算 -------------------------------------------------
+    stl = settlement.settle(
+        item_results,
+        catalog,
+        policy,
+        sla_compensation=sla,
+        flags=case.get("policy_flags") or {},
+        warnings=warnings,
+    )
+
+    policy_info = None
+    if policy:
+        cov_map = policies.build_coverage_map(policy, catalog)
+        policy_info = {
+            "id": policy.get("id"),
+            "name": policy.get("name"),
+            "insurer": policy.get("insurer"),
+            "product_type": policy.get("product_type"),
+            "source_file": policy.get("source_file"),
+            "summary": policy.get("summary"),
+            "parameters_are_assumed": policy.get("parameters_are_assumed", True),
+            "coverage_mode": coverage_mode,
+            "coverage_stats": policies.coverage_stats(cov_map),
+            "settlement_notes": policy.get("settlement_notes") or [],
+        }
+
     labels = {
         "column_headers": catalog.get("column_headers") or {},
         "summary_headers": catalog.get("summary_headers") or {},
@@ -173,8 +247,12 @@ def compute(case: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         "calc_date": case.get("calc_date") or "",
         "s1_method": s1_method,
         "sla_compensation": sla,
+        "policy_id": policy.get("id") if policy else None,
+        "coverage_mode": coverage_mode,
+        "policy": policy_info,
         "items": item_results,
         "categories": cat_results,
+        "settlement": stl,
         "summary": {
             "covered_total": covered_total,
             "sla_deduction": sla_deduction,
@@ -182,6 +260,8 @@ def compute(case: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
             "indirect_subtotal": indirect,
             "direct_subtotal": direct,
             "fact_total": fact_total,
+            "payable": stl.get("payable") if stl.get("applied") else None,
+            "settlement_applied": bool(stl.get("applied")),
         },
         "warnings": warnings,
         "labels": labels,

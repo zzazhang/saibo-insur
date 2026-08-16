@@ -59,6 +59,21 @@
     view: 1,
     selectedModules: {},
     caseTypeId: "ransomware",
+    policies: [],
+    policyId: "",
+    policyDetail: null,
+    coverageMode: "policy",
+    policyFlags: {},
+    narrative: null,
+  };
+
+  var COVERAGE_BADGE = {
+    covered: { text: "承保", cls: "cov-ok" },
+    limited: { text: "有限承保", cls: "cov-warn" },
+    conditional: { text: "附条件承保", cls: "cov-warn" },
+    excluded: { text: "明确除外", cls: "cov-no" },
+    nominal_only: { text: "名义承保·实际不可赔", cls: "cov-nominal" },
+    unmapped: { text: "条款无对应责任", cls: "cov-none" },
   };
 
   function api(url, options) {
@@ -445,15 +460,21 @@
       categories[cat.code] = { switch: sw };
     });
 
-    return {
+    var out = {
+      schema_version: "1.0",
       case_id: document.getElementById("case-id").value,
       case_name: document.getElementById("case-name").value,
       calc_date: document.getElementById("calc-date").value,
+      policy_id: state.policyId || null,
+      coverage_mode: state.policyId ? state.coverageMode : "manual",
+      policy_flags: state.policyFlags,
       s1_method: document.getElementById("s1-method").value,
       sla_compensation: document.getElementById("sla").value,
       categories: categories,
       items: items,
     };
+    if (state.narrative) out.narrative = state.narrative;
+    return out;
   }
 
   function scheduleCompute() {
@@ -544,6 +565,9 @@
     setText("rpt-indirect", money(s.indirect_subtotal));
     setText("rpt-direct", money(s.direct_subtotal));
     setText("rpt-fact", money(s.fact_total));
+    setText("rpt-fact-kpi", money(s.fact_total));
+    setText("rpt-policy", (result.policy && result.policy.name) || "（未指定保单）");
+    renderSettlement(result);
 
     setText("rpt-s1-method", caseData.s1_method || "—");
     setText("rpt-sla-input", money(caseData.sla_compensation) + " 元");
@@ -573,6 +597,120 @@
     });
   }
 
+  function renderSettlement(result) {
+    var stl = result.settlement || {};
+    var section = document.getElementById("rpt-settlement-section");
+    var stepsBody = document.querySelector("#rpt-steps-table tbody");
+    var subBody = document.querySelector("#rpt-sublimit-table tbody");
+    var policyBox = document.getElementById("rpt-policy-box");
+    var biBox = document.getElementById("rpt-bi-box");
+    var blockedBox = document.getElementById("rpt-blocked-box");
+
+    if (!stl.applied) {
+      section.classList.add("d-none");
+      setText("rpt-payable", "—");
+      setText("rpt-payable-sub", "未指定保单，结算层未启用");
+      return;
+    }
+    section.classList.remove("d-none");
+    setText("rpt-payable", money(stl.payable));
+    setText(
+      "rpt-payable-sub",
+      "赔付率 " + (stl.payout_ratio_vs_fact * 100).toFixed(1) + "% · 自留 " +
+        money(stl.self_retention) + " 元"
+    );
+
+    var p = result.policy || {};
+    var html =
+      "<div class='policy-name'>" + escapeHtml(stl.policy_name || "") + "</div>" +
+      "<div class='policy-sum'>承保人 " + escapeHtml(stl.insurer || "—") +
+      " · 累计限额 " + money(stl.aggregate_limit) + " 元" +
+      " · 免赔额 " + money(stl.deductible_amount) + " 元（" + escapeHtml(stl.deductible_scope) + "）" +
+      " · 条款来源 " + escapeHtml(p.source_file || "—") + "</div>";
+    if (p.parameters_are_assumed) {
+      html +=
+        "<div class='policy-warn'>限额与免赔额为演示用假设值，条款原文表述为" +
+        "「由投保人与保险人协商确定」。</div>";
+    }
+    (stl.conditional_notes || []).forEach(function (n) {
+      html += "<div class='policy-note'>已触发条件条款 — " + escapeHtml(n) + "</div>";
+    });
+    policyBox.innerHTML = html;
+
+    stepsBody.innerHTML = "";
+    (stl.steps || []).forEach(function (st) {
+      var d = Number(st.delta || 0);
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>" + escapeHtml(st.step) + "</td>" +
+        "<td class='text-end'>" + money(st.amount) + "</td>" +
+        "<td class='text-end " + (d < 0 ? "delta-cut" : "") + "'>" +
+        (Math.abs(d) < 0.005 ? "—" : money(d)) + "</td>" +
+        "<td class='small text-secondary'>" + escapeHtml(st.note || "") + "</td>";
+      stepsBody.appendChild(tr);
+    });
+
+    subBody.innerHTML = "";
+    var rows = (stl.sublimits || []).filter(function (r) { return r.before > 0; });
+    if (!rows.length) {
+      subBody.innerHTML = "<tr><td colspan='6' class='text-secondary'>本案没有科目落入分项限额组。</td></tr>";
+    }
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      if (r.cut > 0) tr.className = "row-cut";
+      tr.innerHTML =
+        "<td>" + escapeHtml(r.name || r.id) +
+        (r.shares_aggregate ? "" : " <span class='cov-chip cov-warn'>不占用累计限额</span>") + "</td>" +
+        "<td class='small text-secondary'>" + escapeHtml(r.clause || "—") + "</td>" +
+        "<td class='text-end'>" + money(r.limit) + "</td>" +
+        "<td class='text-end'>" + money(r.before) + "</td>" +
+        "<td class='text-end'>" + money(r.after) + "</td>" +
+        "<td class='text-end delta-cut'>" + (r.cut > 0 ? money(r.cut) : "—") + "</td>";
+      subBody.appendChild(tr);
+    });
+
+    var bi = stl.bi || {};
+    if (bi.gross > 0) {
+      biBox.innerHTML =
+        "<h3>营业中断口径拆解</h3>" +
+        "<table class='table report-table'><tbody>" +
+        "<tr><th>中断毛损失（未扣等待期）</th><td class='text-end'>" + money(bi.gross) + "</td></tr>" +
+        "<tr><th>等待期自留额</th><td class='text-end'>" + money(bi.waiting_retention) + "</td></tr>" +
+        "<tr><th>约定免赔额</th><td class='text-end'>" + money(bi.deductible) + "</td></tr>" +
+        "<tr><th>实际自留（口径：" + escapeHtml(bi.mode) + "）</th><td class='text-end'>" +
+        money(bi.retention_applied) + "</td></tr>" +
+        "<tr><th>SLA 抵扣</th><td class='text-end'>" + money(bi.sla_deduction) + "</td></tr>" +
+        "<tr><th>可赔基数</th><td class='text-end'><strong>" + money(bi.base) + "</strong></td></tr>" +
+        "</tbody></table>" +
+        "<p class='report-note'>等待期自留额与约定免赔额按保单口径处理，" +
+        "不会在 S1 公式已扣等待期的基础上再扣一次免赔额。</p>";
+    } else {
+      biBox.innerHTML = "";
+    }
+
+    var blocked = (result.items || []).filter(function (it) {
+      return it.assessed_loss > 0 && !it.effective_covered;
+    });
+    if (blocked.length) {
+      var h =
+        "<h3>已核定但不予赔付的科目</h3>" +
+        "<table class='table report-table'><thead><tr><th>编号</th><th>科目</th>" +
+        "<th class='text-end'>核定损失</th><th>原因</th></tr></thead><tbody>";
+      blocked.forEach(function (it) {
+        h +=
+          "<tr><td>" + escapeHtml(it.code) + "</td><td>" + escapeHtml(it.name) + "</td>" +
+          "<td class='text-end'>" + money(it.assessed_loss) + "</td>" +
+          "<td class='small'>" + escapeHtml(it.coverage_label || "本案未纳入该损失模块") +
+          (it.coverage_clause ? "（" + escapeHtml(it.coverage_clause) + "）" : "") +
+          (it.coverage_note ? "：" + escapeHtml(it.coverage_note) : "") + "</td></tr>";
+      });
+      h += "</tbody></table>";
+      blockedBox.innerHTML = h;
+    } else {
+      blockedBox.innerHTML = "";
+    }
+  }
+
   function buildKeyParamsSummary(result, caseData) {
     var parts = [];
     var by = {};
@@ -589,6 +727,318 @@
     });
     if (!parts.length) return "所选模块暂无已填有效科目，或金额均为 0。";
     return parts.join("；");
+  }
+
+  /* ---------- Policy ---------- */
+  function buildPolicySelect() {
+    var sel = document.getElementById("policy-select");
+    sel.innerHTML = "";
+    var none = document.createElement("option");
+    none.value = "";
+    none.textContent = "（不指定保单 · 只算事实口径）";
+    sel.appendChild(none);
+    state.policies.forEach(function (p) {
+      var opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name;
+      sel.appendChild(opt);
+    });
+    sel.value = state.policyId || "";
+    sel.addEventListener("change", function () {
+      setPolicy(sel.value);
+    });
+
+    var modeSel = document.getElementById("coverage-mode");
+    modeSel.value = state.coverageMode;
+    modeSel.addEventListener("change", function () {
+      state.coverageMode = modeSel.value;
+      if (state.coverageMode === "policy" && state.policyDetail) {
+        applyCoverageToForm(state.policyDetail);
+      }
+      renderCoverageBadges();
+      scheduleCompute();
+    });
+  }
+
+  function setPolicy(id) {
+    state.policyId = id || "";
+    state.policyFlags = {};
+    var info = document.getElementById("policy-info");
+    var flagsBox = document.getElementById("policy-flags");
+    if (!state.policyId) {
+      state.policyDetail = null;
+      info.classList.add("d-none");
+      flagsBox.classList.add("d-none");
+      renderCoverageBadges();
+      scheduleCompute();
+      return Promise.resolve(null);
+    }
+    return api("/api/policies/" + encodeURIComponent(state.policyId)).then(function (p) {
+      state.policyDetail = p;
+      renderPolicyInfo(p);
+      renderPolicyFlags(p);
+      if (state.coverageMode === "policy") applyCoverageToForm(p);
+      renderCoverageBadges();
+      scheduleCompute();
+      return p;
+    });
+  }
+
+  function renderPolicyInfo(p) {
+    var box = document.getElementById("policy-info");
+    var st = p.settlement || {};
+    var stats = p.coverage_stats || {};
+    var chips = Object.keys(COVERAGE_BADGE)
+      .filter(function (k) { return stats[k]; })
+      .map(function (k) {
+        return "<span class='cov-chip " + COVERAGE_BADGE[k].cls + "'>" +
+          COVERAGE_BADGE[k].text + " " + stats[k] + "</span>";
+      })
+      .join("");
+    var bi = st.bi || {};
+    var ded = st.deductible || {};
+    var html =
+      "<div class='policy-name'>" + escapeHtml(p.name) + "</div>" +
+      "<div class='policy-sum'>" + escapeHtml(p.summary || "") + "</div>" +
+      "<div class='cov-chips'>" + chips + "</div>" +
+      "<table class='policy-table'><tbody>" +
+      "<tr><th>累计赔偿限额</th><td>" + money(st.aggregate_limit) + " 元</td>" +
+      "<th>免赔额</th><td>" + money(ded.amount) + " 元（" + escapeHtml(ded.scope || "") + "）</td></tr>" +
+      "<tr><th>营业中断口径</th><td>" + escapeHtml(bi.deductible_mode || "—") + "</td>" +
+      "<th>赔偿期上限</th><td>" + (bi.max_indemnity_days ? bi.max_indemnity_days + " 天" : "—") + "</td></tr>" +
+      "<tr><th>条款依据</th><td colspan='3'>" + escapeHtml(bi.clause || "—") + "</td></tr>" +
+      "<tr><th>条款来源</th><td colspan='3'>" + escapeHtml(p.source_file || "—") + "</td></tr>" +
+      "</tbody></table>";
+    if (p.parameters_are_assumed) {
+      html +=
+        "<div class='policy-warn'>限额与免赔额为演示用假设值——条款原文对这些数值的表述为" +
+        "「由投保人与保险人协商确定」，无公开数字。引用时必须标明该假设。</div>";
+    }
+    (p.settlement_notes || []).forEach(function (n) {
+      html += "<div class='policy-note'>" + escapeHtml(n) + "</div>";
+    });
+    box.innerHTML = html;
+    box.classList.remove("d-none");
+  }
+
+  function renderPolicyFlags(p) {
+    var box = document.getElementById("policy-flags");
+    var conds = ((p.settlement || {}).conditional_deductible) || [];
+    if (!conds.length) {
+      box.classList.add("d-none");
+      box.innerHTML = "";
+      return;
+    }
+    var html = "<div class='flags-title'>本保单的条件性免赔条款（按案情勾选）</div>";
+    conds.forEach(function (c) {
+      html +=
+        "<label class='form-check'><input class='form-check-input' type='checkbox' " +
+        "data-flag='" + escapeHtml(c.flag) + "' /><span class='form-check-label'>" +
+        escapeHtml(c.desc || c.flag) + "</span></label>";
+    });
+    box.innerHTML = html;
+    box.classList.remove("d-none");
+    box.querySelectorAll("input[data-flag]").forEach(function (el) {
+      el.addEventListener("change", function () {
+        state.policyFlags[el.getAttribute("data-flag")] = el.checked;
+        scheduleCompute();
+      });
+    });
+  }
+
+  function applyCoverageToForm(p) {
+    var map = p.coverage_map || {};
+    Object.keys(map).forEach(function (code) {
+      var el = document.getElementById("i-" + code);
+      if (el) el.value = map[code].include;
+    });
+  }
+
+  function renderCoverageBadges() {
+    var map = (state.policyDetail && state.policyDetail.coverage_map) || null;
+    (state.catalog ? state.catalog.items : []).forEach(function (meta) {
+      var card = document.getElementById("item-" + meta.code);
+      if (!card) return;
+      var old = card.querySelector(".cov-badge");
+      if (old) old.parentNode.removeChild(old);
+      if (!map || !map[meta.code]) return;
+      var cov = map[meta.code];
+      var badge = COVERAGE_BADGE[cov.status] || COVERAGE_BADGE.unmapped;
+      var span = document.createElement("span");
+      span.className = "cov-badge " + badge.cls;
+      span.textContent = badge.text;
+      if (cov.clause || cov.note) {
+        span.title = (cov.clause ? cov.clause + "\n" : "") + (cov.note || "");
+      }
+      var title = card.querySelector(".item-title");
+      if (title) title.appendChild(span);
+    });
+    var lock = state.policyId && state.coverageMode === "policy";
+    (state.catalog ? state.catalog.items : []).forEach(function (meta) {
+      var el = document.getElementById("i-" + meta.code);
+      if (el) el.disabled = !!lock;
+    });
+  }
+
+  /* ---------- Import / export / case library ---------- */
+  function downloadBlob(filename, text, mime) {
+    var blob = new Blob([text], { type: (mime || "application/json") + ";charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 0);
+  }
+
+  function slugify(text) {
+    var t = String(text || "").trim().replace(/[^A-Za-z0-9_\-]+/g, "-").replace(/^-+|-+$/g, "");
+    return t || "case";
+  }
+
+  function exportCase() {
+    var caseData = collectCase();
+    var name = slugify(caseData.case_id || caseData.case_name || "case");
+    downloadBlob(name + ".json", JSON.stringify(caseData, null, 2));
+    setStatus("案例 JSON 已导出");
+  }
+
+  function importCaseFile(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var data;
+      try {
+        data = JSON.parse(String(reader.result));
+      } catch (e) {
+        showWarnings(["案例文件不是合法 JSON：" + e.message]);
+        return;
+      }
+      api("/api/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify(data),
+      }).then(function (res) {
+        if (res.issues && res.issues.length) {
+          showWarnings(["案例校验提示：" + res.issues.join("；")]);
+        } else {
+          showWarnings([]);
+        }
+        loadCaseObject(data);
+      });
+    };
+    reader.readAsText(file, "utf-8");
+  }
+
+  function loadCaseObject(data) {
+    state.narrative = data.narrative || null;
+    state.policyFlags = data.policy_flags || {};
+    state.coverageMode = data.coverage_mode || (data.policy_id ? "policy" : "manual");
+    document.getElementById("coverage-mode").value = state.coverageMode;
+    applyCaseToForm(data);
+    applyModulesFromCase(data);
+    var sel = document.getElementById("policy-select");
+    if (sel) sel.value = data.policy_id || "";
+    return setPolicy(data.policy_id || "").then(function () {
+      if (state.coverageMode === "manual") applyIncludesFromCase(data);
+      Object.keys(state.policyFlags).forEach(function (k) {
+        var el = document.querySelector("#policy-flags input[data-flag='" + k + "']");
+        if (el) el.checked = !!state.policyFlags[k];
+      });
+      showView(1);
+      setStatus("案例已载入：" + (data.case_name || data.case_id || ""));
+    });
+  }
+
+  function applyIncludesFromCase(caseData) {
+    (state.catalog.items || []).forEach(function (meta) {
+      var entry = (caseData.items && caseData.items[meta.code]) || {};
+      var el = document.getElementById("i-" + meta.code);
+      if (el && entry.include) el.value = entry.include;
+    });
+  }
+
+  function applyModulesFromCase(caseData) {
+    state.caseTypeId = "custom";
+    var sel = document.getElementById("case-type");
+    if (sel) sel.value = "custom";
+    state.catalog.categories.forEach(function (cat) {
+      var sw = (caseData.categories && caseData.categories[cat.code]) || {};
+      var on = sw.switch ? sw.switch === "ON" : false;
+      state.selectedModules[cat.code] = on;
+      var box = document.getElementById("mod-" + cat.code);
+      if (box) box.checked = on;
+      var csw = document.getElementById("csw-" + cat.code);
+      if (csw) csw.value = on ? "ON" : "OFF";
+    });
+  }
+
+  function refreshCaseList() {
+    var box = document.getElementById("cases-list");
+    box.textContent = "加载中…";
+    return api("/api/cases").then(function (res) {
+      var list = res.cases || [];
+      if (!list.length) {
+        box.innerHTML = "<div class='text-secondary'>案例库为空。填好案件后点右上「保存当前案件」。</div>";
+        return;
+      }
+      box.innerHTML = "";
+      list.forEach(function (c) {
+        var row = document.createElement("div");
+        row.className = "case-row";
+        row.innerHTML =
+          "<div class='case-meta'><strong>" + escapeHtml(c.case_name || c.name) + "</strong>" +
+          "<span class='case-sub'>" + escapeHtml(c.name) +
+          (c.policy_id ? " · " + escapeHtml(c.policy_id) : "") + "</span></div>";
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-sm btn-outline-primary";
+        btn.textContent = "载入";
+        btn.addEventListener("click", function () {
+          api("/api/cases/" + encodeURIComponent(c.name)).then(function (data) {
+            loadCaseObject(data).then(function () {
+              document.getElementById("cases-panel").classList.add("d-none");
+            });
+          });
+        });
+        row.appendChild(btn);
+        box.appendChild(row);
+      });
+    });
+  }
+
+  function saveCurrentCase() {
+    var nameEl = document.getElementById("case-save-name");
+    var caseData = collectCase();
+    var name = slugify(nameEl.value || caseData.case_id || caseData.case_name);
+    api("/api/cases/" + encodeURIComponent(name), {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify({ case: caseData, minimize: true }),
+    })
+      .then(function (res) {
+        setStatus("已保存：" + res.saved + ".json");
+        if (res.issues && res.issues.length) showWarnings(res.issues);
+        else showWarnings([]);
+        refreshCaseList();
+      })
+      .catch(function (err) {
+        showWarnings(["保存失败：" + (err && err.message ? err.message : err)]);
+      });
+  }
+
+  function exportMarkdown() {
+    var caseData = collectCase();
+    api("/api/export/markdown", {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify(caseData),
+    }).then(function (res) {
+      var name = slugify(caseData.case_id || caseData.case_name || "case");
+      downloadBlob(name + ".md", res.markdown, "text/markdown");
+      setStatus("Markdown 报告已导出");
+    });
   }
 
   /* ---------- Apply case / demo ---------- */
@@ -715,6 +1165,22 @@
     document.getElementById("btn-print").addEventListener("click", function () {
       window.print();
     });
+    document.getElementById("btn-export-md").addEventListener("click", exportMarkdown);
+    document.getElementById("btn-export").addEventListener("click", exportCase);
+    document.getElementById("btn-import").addEventListener("click", function () {
+      document.getElementById("import-file").click();
+    });
+    document.getElementById("import-file").addEventListener("change", function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (f) importCaseFile(f);
+      e.target.value = "";
+    });
+    document.getElementById("btn-cases").addEventListener("click", function () {
+      var panel = document.getElementById("cases-panel");
+      panel.classList.toggle("d-none");
+      if (!panel.classList.contains("d-none")) refreshCaseList();
+    });
+    document.getElementById("btn-case-save").addEventListener("click", saveCurrentCase);
     document.getElementById("btn-modules-all").addEventListener("click", function () {
       state.catalog.categories.forEach(function (cat) {
         state.selectedModules[cat.code] = true;
@@ -742,23 +1208,27 @@
     });
     document.getElementById("btn-demo").addEventListener("click", function () {
       api("/api/demo").then(function (demo) {
+        state.narrative = null;
         applyCaseToForm(demo);
         applyDemoModulesFromCase(demo);
+        renderCoverageBadges();
         showView(1);
         setStatus("演示案已加载");
       });
     });
 
-    Promise.all([api("/api/catalog"), api("/api/demo")])
-      .then(function (pair) {
-        state.catalog = pair[0];
+    Promise.all([api("/api/catalog"), api("/api/demo"), api("/api/policies")])
+      .then(function (triple) {
+        state.catalog = triple[0];
+        state.policies = (triple[2] || {}).policies || [];
         buildShell();
         buildModulePicker();
+        buildPolicySelect();
         applyCaseTypePreset(true);
-        applyCaseToForm(pair[1]);
-        applyDemoModulesFromCase(pair[1]);
+        applyCaseToForm(triple[1]);
+        applyDemoModulesFromCase(triple[1]);
         showView(1);
-        setStatus("演示案已加载");
+        setStatus("演示案已加载（未指定保单，可在「投保产品」中选择）");
       })
       .catch(function (err) {
         setStatus("启动失败");

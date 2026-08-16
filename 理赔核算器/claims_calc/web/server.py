@@ -15,6 +15,9 @@ _ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
+from claims_calc import cases as case_io  # noqa: E402
+from claims_calc import policies as pol  # noqa: E402
+from claims_calc.cli import render_markdown  # noqa: E402
 from claims_calc.engine import build_demo_case, compute, get_catalog  # noqa: E402
 
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
@@ -145,11 +148,101 @@ def make_app(base_path: str = "") -> Callable:
                     },
                 )
 
+        # ---- 保单库 -------------------------------------------------
+        if path == "/api/policies" and method == "GET":
+            return _json_response(
+                start_response, "200 OK", {"policies": pol.list_policies()}
+            )
+
+        if path.startswith("/api/policies/") and method == "GET":
+            pid = path[len("/api/policies/") :]
+            policy = pol.get_policy(pid)
+            if not policy:
+                return _json_response(
+                    start_response, "404 Not Found", {"error": "未找到保单 %s" % pid}
+                )
+            cov = pol.build_coverage_map(policy, get_catalog())
+            payload = dict(policy)
+            payload["coverage_map"] = cov
+            payload["coverage_stats"] = pol.coverage_stats(cov)
+            return _json_response(start_response, "200 OK", payload)
+
+        # ---- 案例库 -------------------------------------------------
+        if path == "/api/cases" and method == "GET":
+            return _json_response(
+                start_response, "200 OK", {"cases": case_io.list_cases()}
+            )
+
+        if path.startswith("/api/cases/"):
+            name = path[len("/api/cases/") :]
+            try:
+                if method == "GET":
+                    return _json_response(
+                        start_response, "200 OK", case_io.load_case(name)
+                    )
+                if method == "POST" or method == "PUT":
+                    raw = _read_body(environ)
+                    body = json.loads(raw.decode("utf-8")) if raw.strip() else {}
+                    case = body.get("case") if isinstance(body, dict) else None
+                    if case is None:
+                        case = body
+                    catalog = get_catalog()
+                    if body.get("minimize"):
+                        case = case_io.minimize(case, catalog, compute(case))
+                    saved = case_io.save_case(name, case)
+                    return _json_response(
+                        start_response,
+                        "200 OK",
+                        {
+                            "saved": os.path.basename(saved),
+                            "issues": case_io.validate_case(case, catalog),
+                        },
+                    )
+                if method == "DELETE":
+                    return _json_response(
+                        start_response, "200 OK", {"deleted": case_io.delete_case(name)}
+                    )
+            except FileNotFoundError as exc:
+                return _json_response(
+                    start_response, "404 Not Found", {"error": str(exc)}
+                )
+            except (ValueError, OSError) as exc:
+                return _json_response(
+                    start_response, "400 Bad Request", {"error": str(exc)}
+                )
+
+        if path == "/api/validate" and method == "POST":
+            raw = _read_body(environ)
+            try:
+                case = json.loads(raw.decode("utf-8")) if raw.strip() else {}
+            except ValueError as exc:
+                return _json_response(
+                    start_response, "400 Bad Request", {"error": "JSON 解析失败：%s" % exc}
+                )
+            return _json_response(
+                start_response,
+                "200 OK",
+                {"issues": case_io.validate_case(case, get_catalog())},
+            )
+
+        if path == "/api/export/markdown" and method == "POST":
+            raw = _read_body(environ)
+            try:
+                case = json.loads(raw.decode("utf-8")) if raw.strip() else {}
+            except ValueError as exc:
+                return _json_response(
+                    start_response, "400 Bad Request", {"error": "JSON 解析失败：%s" % exc}
+                )
+            result = compute(case_io.strip_to_compute(case))
+            return _json_response(
+                start_response, "200 OK", {"markdown": render_markdown(case, result)}
+            )
+
         if path == "/api/config" and method == "GET":
             return _json_response(
                 start_response,
                 "200 OK",
-                {"base_path": base or "", "version": "0.1.0"},
+                {"base_path": base or "", "version": "0.3.0"},
             )
 
         if path in ("/", ""):
