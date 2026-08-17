@@ -468,6 +468,73 @@ class TestParameterSources(unittest.TestCase):
             self.assertEqual(a["missing"], [], "%s 存在未标注参数" % name)
 
 
+class TestC1C6ControlledPair(unittest.TestCase):
+    """
+    C1/C6 受控对照：同一事故、同一参数，仅换保单。
+    差额必须完全来自产品结构，不得来自事故严重程度。
+    """
+
+    def _pair(self):
+        c1 = compute(case_io.strip_to_compute(
+            case_io.load_case("case-c1-allianz-outsourcer")))
+        c6 = compute(case_io.strip_to_compute(
+            case_io.load_case("case-c6-pingan-outsourcer")))
+        return c1, c6
+
+    def test_fact_loss_identical(self):
+        """事实口径必须一模一样，否则对照不成立。"""
+        c1, c6 = self._pair()
+        self.assertEqual(c1["summary"]["fact_total"], c6["summary"]["fact_total"])
+
+    def test_outsourcer_exclusion_actually_binds(self):
+        """
+        外包商除外必须真的咬合到科目上。
+        若案情只用普通科目，平安B的外包商除外一次都不会触发，
+        对照组的结论就会正确而理由错误——这是最难发现的错。
+        """
+        c1, c6 = self._pair()
+        a = {i["code"]: i for i in c1["items"]}
+        b = {i["code"]: i for i in c6["items"]}
+        # S1-02 依赖中断：安联承保、平安B除外，且金额非零
+        self.assertGreater(a["S1-02"]["assessed_loss"], 0)
+        self.assertEqual(a["S1-02"]["coverage_status"], "covered")
+        self.assertEqual(b["S1-02"]["coverage_status"], "excluded")
+        self.assertGreater(a["S1-02"]["effective_covered"], 0)
+        self.assertEqual(b["S1-02"]["effective_covered"], 0.0)
+        # F1-06 供应链调查费同样必须有金额
+        self.assertGreater(a["F1-06"]["assessed_loss"], 0)
+
+    def test_third_party_liability_is_dominant_gap(self):
+        """第三方责任是差额主体，须能从分项限额裁剪中看出。"""
+        c1, c6 = self._pair()
+        legal = [r for r in c6["settlement"]["sublimits"]
+                 if r["id"] == "SL-LEGAL"][0]
+        self.assertGreater(legal["cut"], 1000000)
+        self.assertEqual(c1["settlement"]["aggregate_cut"], 0.0)
+
+    def test_payout_gap(self):
+        c1, c6 = self._pair()
+        self.assertGreater(c1["settlement"]["payout_ratio_vs_fact"], 0.9)
+        self.assertLess(c6["settlement"]["payout_ratio_vs_fact"], 0.5)
+
+    def test_unapproved_outsourcer_cliff_zeroes_payout(self):
+        """原因型除外：外包商未被认可，整案赔付归零而非个别科目不赔。"""
+        case = case_io.strip_to_compute(
+            case_io.load_case("case-c6-pingan-outsourcer"))
+        case["policy_flags"] = {"unapproved_outsourcer": True}
+        r = compute(case)
+        self.assertEqual(r["settlement"]["payable"], 0.0)
+        self.assertTrue(r["settlement"]["conditional_notes"])
+        # 事实口径不受影响——损失照常核定，只是不赔
+        self.assertGreater(r["summary"]["fact_total"], 5000000)
+
+    def test_allianz_waiting_period_is_zero_by_clause(self):
+        """安联条款规定营业中断含等待期内损失，p3 填 0 是依条款而非疏漏。"""
+        case = case_io.load_case("case-c1-allianz-outsourcer")
+        self.assertEqual(case["items"]["S1-01"]["params"]["p3"], 0)
+        self.assertIn("等待期", case["param_sources"]["S1-01.p3"]["note"])
+
+
 class TestCaseIO(unittest.TestCase):
     def test_safe_name_rejects_traversal(self):
         for bad in ["../etc/passwd", "a/b", "", "案例", "a b"]:
