@@ -347,12 +347,12 @@ class TestInRowLimitContamination(unittest.TestCase):
         self.assertFalse(any("污染" in w for w in r["warnings"]))
 
 
-class TestCase01Counterfactual(unittest.TestCase):
-    """CASE-01 与 CASE-01B 构成受控对比：唯一差异是赎金。"""
+class TestC8Counterfactual(unittest.TestCase):
+    """C8 与 C8B 构成受控对比：唯一差异是赎金。"""
 
     def test_ransom_does_not_change_payout(self):
-        a = compute(case_io.strip_to_compute(case_io.load_case("case-01-cosco-ransomware")))
-        b = compute(case_io.strip_to_compute(case_io.load_case("case-01b-cosco-ransom-paid")))
+        a = compute(case_io.strip_to_compute(case_io.load_case("case-c8-cosco-ransomware")))
+        b = compute(case_io.strip_to_compute(case_io.load_case("case-c8b-cosco-ransom-paid")))
         # 事实口径相差正好一笔赎金
         self.assertEqual(
             b["summary"]["fact_total"] - a["summary"]["fact_total"], 600000.0
@@ -366,21 +366,21 @@ class TestCase01Counterfactual(unittest.TestCase):
         )
 
     def test_ransom_is_nominal_only(self):
-        r = compute(case_io.strip_to_compute(case_io.load_case("case-01b-cosco-ransom-paid")))
+        r = compute(case_io.strip_to_compute(case_io.load_case("case-c8b-cosco-ransom-paid")))
         by = {i["code"]: i for i in r["items"]}
         self.assertEqual(by["S3-01"]["coverage_status"], "nominal_only")
         self.assertEqual(by["S3-01"]["assessed_loss"], 600000.0)
         self.assertEqual(by["S3-01"]["effective_covered"], 0.0)
 
     def test_business_interruption_entirely_unmapped(self):
-        r = compute(case_io.strip_to_compute(case_io.load_case("case-01-cosco-ransomware")))
+        r = compute(case_io.strip_to_compute(case_io.load_case("case-c8-cosco-ransomware")))
         by = {i["code"]: i for i in r["items"]}
         self.assertEqual(by["S1-01"]["coverage_status"], "unmapped")
         self.assertEqual(by["S1-01"]["assessed_loss"], 1134000.0)  # BI 不含工时费率，未受重算影响
         self.assertEqual(r["settlement"]["bi"]["gross"], 0.0)
 
     def test_conditional_deductible_triggered(self):
-        r = compute(case_io.strip_to_compute(case_io.load_case("case-01-cosco-ransomware")))
+        r = compute(case_io.strip_to_compute(case_io.load_case("case-c8-cosco-ransomware")))
         self.assertEqual(r["settlement"]["deductible_amount"], 110000.0)
         self.assertTrue(r["settlement"]["conditional_notes"])
 
@@ -620,6 +620,55 @@ class TestC7C9ComplementaryPair(unittest.TestCase):
             self.assertGreater(a[code]["assessed_loss"], 0, code)
             self.assertEqual(a[code]["effective_covered"], 0.0, code)
             self.assertEqual(b[code]["effective_covered"], 0.0, code)
+
+
+class TestC2FrameworkGap(unittest.TestCase):
+    """
+    C2 记录一个框架缺口：69 科目没有「行政罚款与监管处罚」的位置。
+    这些测试锁定「缺口确实存在」，避免日后被无声地塞进某个不相干的科目。
+    """
+
+    def test_no_item_hosts_administrative_fines(self):
+        catalog = get_catalog()
+        names = {it["code"]: it["name"] for it in catalog["items"]}
+        # R1-06 是合同违约罚金，R2-02 是调查抗辩费用，都不是行政罚款本身
+        self.assertEqual(names.get("R1-06"), "违约罚金")
+        self.assertEqual(names.get("R2-02"), "监管调查抗辩费")
+        self.assertNotIn("R1-07", names)
+
+    def test_chubb_does_not_misuse_r1_04_for_fines(self):
+        """R1-04 的本义是客户与伙伴补偿，不得被挪用来装行政罚款。"""
+        entry = pol.coverage_for(pol.get_policy("chubb-cyber-erm"), "R1-04")
+        self.assertEqual(entry["status"], "covered")
+        self.assertNotIn("罚", entry.get("note", ""))
+
+    def test_gap_is_documented_in_policy_notes(self):
+        notes = " ".join(pol.get_policy("chubb-cyber-erm")["settlement_notes"])
+        self.assertIn("框架缺口", notes)
+        self.assertIn("R1-07", notes)
+
+    def test_case_quantifies_the_invisible_gap(self):
+        """案例必须同时给出表面赔付率与计入罚款后的真实覆盖率。"""
+        case = case_io.load_case("case-c2-chubb-health-breach")
+        r = compute(case_io.strip_to_compute(case))
+        fact = r["summary"]["fact_total"]
+        payable = r["settlement"]["payable"]
+        fine = 3000000
+        surface = payable / fact
+        real = payable / (fact + fine)
+        self.assertGreater(surface, 0.95)
+        self.assertLess(real, 0.80)
+        text = " ".join(case["narrative"]["disputes"])
+        self.assertIn("98.7%", text)
+        self.assertIn("75.2%", text)
+
+    def test_regulatory_defence_cost_is_covered_but_fine_is_not(self):
+        """同一场事故内三种结论并存：罚款不赔、赔偿赔、抗辩费用赔。"""
+        r = compute(case_io.strip_to_compute(
+            case_io.load_case("case-c2-chubb-health-breach")))
+        by = {i["code"]: i for i in r["items"]}
+        self.assertGreater(by["R2-02"]["effective_covered"], 0)   # 监管抗辩费用可赔
+        self.assertGreater(by["R1-01"]["effective_covered"], 0)   # 民事赔偿可赔
 
 
 class TestCaseIO(unittest.TestCase):
