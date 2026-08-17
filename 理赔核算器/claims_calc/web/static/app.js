@@ -65,6 +65,7 @@
     coverageMode: "policy",
     policyFlags: {},
     narrative: null,
+    includeOverrides: {},   // 科目编号 -> true，表示该项由案例显式覆盖条款判定
   };
 
   var COVERAGE_BADGE = {
@@ -448,6 +449,7 @@
         voucher: voucherEl ? voucherEl.value : "",
         include: includeEl ? includeEl.value : "ON",
       };
+      if (state.includeOverrides[meta.code]) entry.include_override = true;
       if (meta.formula_type === "r1_confirm") entry.legal_confirm = params.p2;
       items[meta.code] = entry;
     });
@@ -846,9 +848,16 @@
     });
   }
 
+  /**
+   * 按保单条款映射刷新各科目的「计入」开关。
+   *
+   * state.includeOverrides 里的科目是案例显式声明要偏离条款判定的
+   * （如模块化产品中未投保的模块），必须跳过，否则案例的核心设计会被抹掉。
+   */
   function applyCoverageToForm(p) {
     var map = p.coverage_map || {};
     Object.keys(map).forEach(function (code) {
+      if (state.includeOverrides[code]) return;
       var el = document.getElementById("i-" + code);
       if (el) el.value = map[code].include;
     });
@@ -873,10 +882,24 @@
       var title = card.querySelector(".item-title");
       if (title) title.appendChild(span);
     });
-    var lock = state.policyId && state.coverageMode === "policy";
+    // 保单模式下「计入」由条款映射决定，但允许人工覆盖（如模块化产品未投保的模块）。
+    // 一旦人工改动，记入 includeOverrides，之后不再被条款映射刷掉，
+    // 提交时带上 include_override 标记，引擎会在 warnings 里留痕。
     (state.catalog ? state.catalog.items : []).forEach(function (meta) {
       var el = document.getElementById("i-" + meta.code);
-      if (el) el.disabled = !!lock;
+      if (!el || el.dataset.ovBound) return;
+      el.dataset.ovBound = "1";
+      el.addEventListener("change", function () {
+        if (!state.policyId || state.coverageMode !== "policy") return;
+        var cov = (state.policyDetail && state.policyDetail.coverage_map) || {};
+        var expected = cov[meta.code] ? cov[meta.code].include : null;
+        if (expected && el.value !== expected) {
+          state.includeOverrides[meta.code] = true;
+        } else {
+          delete state.includeOverrides[meta.code];
+        }
+        scheduleCompute();
+      });
     });
   }
 
@@ -936,7 +959,13 @@
     state.policyFlags = data.policy_flags || {};
     state.coverageMode = data.coverage_mode || (data.policy_id ? "policy" : "manual");
     document.getElementById("coverage-mode").value = state.coverageMode;
-    applyCaseToForm(data);
+    state.includeOverrides = {};
+    Object.keys(data.items || {}).forEach(function (code) {
+      if ((data.items[code] || {}).include_override) {
+        state.includeOverrides[code] = true;
+      }
+    });
+    applyCaseToForm(data, true);
     applyModulesFromCase(data);
     var sel = document.getElementById("policy-select");
     if (sel) sel.value = data.policy_id || "";
@@ -1051,22 +1080,34 @@
     document.getElementById("sla").value = valOrEmpty(caseData.sla_compensation);
   }
 
-  function applyCaseToForm(caseData) {
+  /**
+   * 把案例填进表单。
+   *
+   * strictItems 为 true 时（载入已保存的案例），案例中未声明的科目一律留空，
+   * 不回落到 catalog 的演示默认值。否则一个写明「未支付赎金」的案例
+   * 会凭空多出 80 万核定损失，而且从界面上完全看不出来。
+   * 演示案（/api/demo）提交全部 69 项，走 strictItems=false 保持原行为。
+   */
+  function applyCaseToForm(caseData, strictItems) {
     fillCaseMeta(caseData);
     var catalog = state.catalog;
+    var declared = caseData.items || {};
     catalog.categories.forEach(function (cat) {
       var sw = (caseData.categories && caseData.categories[cat.code]) || {};
       var el = document.getElementById("csw-" + cat.code);
       if (el) el.value = sw.switch || cat.switch_default || "ON";
     });
     catalog.items.forEach(function (meta) {
-      var entry = (caseData.items && caseData.items[meta.code]) || {};
+      var has = Object.prototype.hasOwnProperty.call(declared, meta.code);
+      var entry = declared[meta.code] || {};
       var params = entry.params || {};
       (meta.params || []).forEach(function (p) {
         var el = document.getElementById("p-" + meta.code + "-" + p.key);
         if (!el) return;
         var v = params[p.key];
-        if (v === null || v === undefined) v = p.default;
+        if (v === null || v === undefined) {
+          v = strictItems && !has ? "" : p.default;
+        }
         el.value = valOrEmpty(v);
       });
       var voucherEl = document.getElementById("v-" + meta.code);
@@ -1209,7 +1250,8 @@
     document.getElementById("btn-demo").addEventListener("click", function () {
       api("/api/demo").then(function (demo) {
         state.narrative = null;
-        applyCaseToForm(demo);
+        state.includeOverrides = {};
+        applyCaseToForm(demo, false);
         applyDemoModulesFromCase(demo);
         renderCoverageBadges();
         showView(1);
@@ -1225,7 +1267,7 @@
         buildModulePicker();
         buildPolicySelect();
         applyCaseTypePreset(true);
-        applyCaseToForm(triple[1]);
+        applyCaseToForm(triple[1], false);
         applyDemoModulesFromCase(triple[1]);
         showView(1);
         setStatus("演示案已加载（未指定保单，可在「投保产品」中选择）");

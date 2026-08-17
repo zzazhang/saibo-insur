@@ -207,6 +207,31 @@ def minimize(
             if not (r.get("assessed_loss") or 0):
                 zero_codes.add(r["code"])
 
+    # 「显式填 0」与「留空」不是一回事。
+    # 例如安联条款规定营业中断包含等待期内损失，故 S1-01 的 p3 等待期须填 0；
+    # 若把 0 当空值丢掉，重载时会回落到 catalog 默认的 1 天，凭空多扣一天。
+    # 因此：只有当某参数的值与 catalog 默认值相同、且为空/零时才可省略。
+    defaults = {}
+    for meta in catalog["items"]:
+        defaults[meta["code"]] = {
+            p["key"]: p.get("default") for p in (meta.get("params") or [])
+        }
+
+    def _droppable(code: str, key: str, value: Any) -> bool:
+        if value in (None, ""):
+            return True
+        try:
+            v = float(value)
+        except (TypeError, ValueError):
+            return False
+        if v != 0:
+            return False
+        d = defaults.get(code, {}).get(key)
+        try:
+            return d in (None, "") or float(d) == 0.0
+        except (TypeError, ValueError):
+            return False
+
     out = dict(case)
     items = {}
     for meta in catalog["items"]:
@@ -218,7 +243,7 @@ def minimize(
             continue
         params = {}
         for k, v in (entry.get("params") or {}).items():
-            if v in (None, "", 0, "0"):
+            if _droppable(code, k, v):
                 continue
             params[k] = v
         keep: Dict[str, Any] = {}

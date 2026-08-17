@@ -924,6 +924,144 @@ class TestAllTenCases(unittest.TestCase):
         self.assertEqual(len(seen), 10)
 
 
+class TestWebCliEquivalence(unittest.TestCase):
+    """
+    网页端与命令行必须算出相同结果。
+
+    背景：曾经不一致，而且 11 个案例全中。两个根因——
+      ① 网页载入案例时，案例未声明的科目回落到 catalog 演示默认值
+         （赎金 80 万、云资源费 4 万凭空出现）
+      ② 网页按保单条款重刷全部开关，丢弃了案例的 include_override
+         （C5「只投两个模块」的核心设计被抹成「全投保」）
+    这类「两条路走出不同答案」的问题读代码发现不了，只能靠等价性测试守。
+    """
+
+    @staticmethod
+    def simulate_web(case):
+        """精确复刻前端 loadCaseObject + collectCase 的行为。"""
+        catalog = get_catalog()
+        covmap = None
+        mode = case.get("coverage_mode") or ("policy" if case.get("policy_id") else "manual")
+        if case.get("policy_id") and mode == "policy":
+            p = pol.get_policy(case["policy_id"])
+            if p:
+                covmap = pol.build_coverage_map(p, catalog)
+        raw = case.get("items") or {}
+        overrides = {c for c, e in raw.items() if e.get("include_override")}
+        items = {}
+        for meta in catalog["items"]:
+            code = meta["code"]
+            has = code in raw
+            entry = raw.get(code) or {}
+            params = {}
+            for pm in meta.get("params") or []:
+                v = (entry.get("params") or {}).get(pm["key"])
+                if v is None:
+                    v = "" if not has else pm.get("default")
+                params[pm["key"]] = v
+            inc = entry.get("include") or "ON"
+            if covmap and code not in overrides:
+                inc = covmap[code]["include"]
+            e = {"params": params, "voucher": entry.get("voucher", ""), "include": inc}
+            if code in overrides:
+                e["include_override"] = True
+            items[code] = e
+        out = {k: case.get(k) for k in
+               ("case_id", "policy_id", "coverage_mode", "policy_flags",
+                "s1_method", "sla_compensation")}
+        out["categories"] = case.get("categories") or {}
+        out["items"] = items
+        return out
+
+    def test_every_case_matches_between_web_and_cli(self):
+        for name in [c["name"] for c in case_io.list_cases()]:
+            if name.startswith("demo-"):
+                continue
+            case = case_io.load_case(name)
+            cli = compute(case_io.strip_to_compute(case))
+            web = compute(self.simulate_web(case))
+            self.assertAlmostEqual(
+                cli["summary"]["fact_total"], web["summary"]["fact_total"],
+                places=2, msg="%s 事实口径不一致" % name)
+            self.assertAlmostEqual(
+                cli["settlement"]["payable"] or 0, web["settlement"]["payable"] or 0,
+                places=2, msg="%s 赔付额不一致" % name)
+
+    def test_c5_override_survives_web_path(self):
+        """C5 的核心设计：只投两个模块，网页端不得算成全投保。"""
+        case = case_io.load_case("case-c5-sunshine-partial-modules")
+        web = compute(self.simulate_web(case))
+        self.assertAlmostEqual(web["settlement"]["payable"], 1920000.0, places=2)
+        self.assertLess(web["settlement"]["payable"], 2500000.0)  # 决不能是全投保的 478 万
+
+    def test_web_does_not_inherit_demo_defaults(self):
+        """未声明的科目不得带出 catalog 演示默认值。"""
+        case = case_io.load_case("case-c5-sunshine-partial-modules")
+        web = compute(self.simulate_web(case))
+        by = {i["code"]: i for i in web["items"]}
+        self.assertEqual(by["S3-01"]["assessed_loss"], 0.0)   # 赎金默认 80 万
+        self.assertEqual(by["S2-05"]["assessed_loss"], 0.0)   # 云资源费默认 4 万
+
+
+class TestSaveReloadRoundTrip(unittest.TestCase):
+    """
+    保存→重载必须结果不变。
+
+    背景：minimize 曾把「显式填 0」当空值丢掉。安联条款规定营业中断包含
+    等待期内损失，故 S1-01 的 p3 须填 0；丢掉后重载回落到 catalog 默认的
+    1 天，凭空多扣一天，C1 赔付从 578 万变成 563 万。
+    """
+
+    def test_round_trip_preserves_result(self):
+        catalog = get_catalog()
+        for name in [c["name"] for c in case_io.list_cases()]:
+            if name.startswith("demo-"):
+                continue
+            case = case_io.load_case(name)
+            r1 = compute(case_io.strip_to_compute(case))
+            small = case_io.minimize(case, catalog, r1)
+            r2 = compute(case_io.strip_to_compute(small))
+            self.assertAlmostEqual(
+                r1["summary"]["fact_total"], r2["summary"]["fact_total"],
+                places=2, msg="%s 往返后事实口径变了" % name)
+            self.assertAlmostEqual(
+                r1["settlement"]["payable"] or 0, r2["settlement"]["payable"] or 0,
+                places=2, msg="%s 往返后赔付额变了" % name)
+
+    def test_explicit_zero_is_not_dropped_when_default_nonzero(self):
+        """p3=0 与 catalog 默认 1 不同，必须保留。"""
+        catalog = get_catalog()
+        case = case_io.load_case("case-c1-allianz-outsourcer")
+        r = compute(case_io.strip_to_compute(case))
+        small = case_io.minimize(case, catalog, r)
+        self.assertIn("p3", small["items"]["S1-01"]["params"])
+        self.assertEqual(small["items"]["S1-01"]["params"]["p3"], 0)
+
+    def test_zero_equal_to_default_is_dropped(self):
+        """默认值本身就是 0 的参数，填 0 可以省略。"""
+        catalog = get_catalog()
+        case = {
+            "policy_id": "taikang-online", "coverage_mode": "policy",
+            "categories": {"S1": {"switch": "ON"}},
+            "items": {"S1-02": {"params": {"p1": 100000, "p2": 2, "p3": 0,
+                                           "p4": 0.3, "p5": 0.5}}},
+        }
+        small = case_io.minimize(case, catalog, compute(case))
+        self.assertNotIn("p3", small["items"]["S1-02"]["params"])
+
+    def test_minimize_preserves_overrides_and_flags(self):
+        catalog = get_catalog()
+        for name in ("case-c5-sunshine-partial-modules",
+                     "case-c10-zhufeng-gov-portal"):
+            case = case_io.load_case(name)
+            small = case_io.minimize(case, catalog, compute(
+                case_io.strip_to_compute(case)))
+            ov_a = {k for k, v in case["items"].items() if v.get("include_override")}
+            ov_b = {k for k, v in small["items"].items() if v.get("include_override")}
+            self.assertEqual(ov_a, ov_b, name)
+            self.assertEqual(case.get("policy_flags"), small.get("policy_flags"), name)
+
+
 class TestCaseIO(unittest.TestCase):
     def test_safe_name_rejects_traversal(self):
         for bad in ["../etc/passwd", "a/b", "", "案例", "a b"]:
