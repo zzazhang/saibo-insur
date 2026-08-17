@@ -671,6 +671,74 @@ class TestC2FrameworkGap(unittest.TestCase):
         self.assertGreater(by["R1-01"]["effective_covered"], 0)   # 民事赔偿可赔
 
 
+class TestC3ZurichDistinctiveCovers(unittest.TestCase):
+    """C3：苏黎世的两项特色责任，以及第二个已识别的框架缺口。"""
+
+    def _c3(self):
+        return compute(case_io.strip_to_compute(
+            case_io.load_case("case-c3-zurich-social-engineering")))
+
+    def test_social_engineering_principal_only_covered_by_zurich(self):
+        """社工诈骗本金：苏黎世赔，平安B、阳光、国寿财B 全部归零。"""
+        base = case_io.strip_to_compute(
+            case_io.load_case("case-c3-zurich-social-engineering"))
+        covered = {}
+        for pid in ("zurich-cn-2020", "pingan-cyber-b",
+                    "sunshine-2016", "guoshou-cyber-b"):
+            c = dict(base)
+            c["policy_id"] = pid
+            by = {i["code"]: i for i in compute(c)["items"]}
+            covered[pid] = by["F1-10"]["effective_covered"]
+        self.assertGreater(covered["zurich-cn-2020"], 1000000)
+        for pid in ("pingan-cyber-b", "sunshine-2016", "guoshou-cyber-b"):
+            self.assertEqual(covered[pid], 0.0, pid)
+
+    def test_f1_10_not_double_matched_by_sublimits(self):
+        """
+        F1-10 单设 SL-SE 分项组后，事故响应组必须显式枚举、
+        不得再用 F1 前缀通配，否则会同时命中两组被重复封顶。
+        """
+        r = self._c3()
+        self.assertFalse(
+            any("同时命中多个分项限额组" in w for w in r["warnings"]),
+            "F1-10 被多个分项组重复匹配",
+        )
+        ids = {x["id"]: x for x in r["settlement"]["sublimits"]}
+        self.assertEqual(ids["SL-SE"]["before"], 1740000.0)
+        self.assertNotIn("F1", ids["SL-IR"]["items"])
+
+    def test_pci_coverage_and_sublimit(self):
+        r = self._c3()
+        by = {i["code"]: i for i in r["items"]}
+        self.assertEqual(by["R3-01"]["coverage_status"], "covered")
+        pci = [x for x in r["settlement"]["sublimits"] if x["id"] == "SL-PCI"][0]
+        self.assertGreater(pci["cut"], 0)          # 本案触顶
+        self.assertTrue(pci["shares_aggregate"])   # 条款5.2.3 不额外增加保额
+
+    def test_higher_of_picks_deductible_over_waiting(self):
+        """本案与 C7 相反：免赔额 20 万 > 等待期自留 4.8 万，取免赔额。"""
+        bi = self._c3()["settlement"]["bi"]
+        self.assertEqual(bi["mode"], "higher_of")
+        self.assertGreater(bi["deductible"], bi["waiting_retention"])
+        self.assertEqual(bi["retention_applied"], bi["deductible"])
+
+    def test_all_zurich_sublimits_share_aggregate(self):
+        """条款5.2.3/5.3.3-5.3.7：全部分项限额均不额外增加总保额。"""
+        for x in self._c3()["settlement"]["sublimits"]:
+            self.assertTrue(x["shares_aggregate"], x["id"])
+
+    def test_fund_loss_gap_is_documented(self):
+        """69 科目没有「被骗资金本身」，只有「资金追回费」。"""
+        catalog = get_catalog()
+        names = {it["code"]: it["name"] for it in catalog["items"]}
+        self.assertEqual(names["F1-10"], "资金追回费")
+        self.assertNotIn("S2-06", names)
+        notes = " ".join(pol.get_policy("zurich-cn-2020")["settlement_notes"])
+        self.assertIn("S2-06", notes)
+        case = case_io.load_case("case-c3-zurich-social-engineering")
+        self.assertIn("科目借用", case["param_sources"]["F1-10"]["note"])
+
+
 class TestCaseIO(unittest.TestCase):
     def test_safe_name_rejects_traversal(self):
         for bad in ["../etc/passwd", "a/b", "", "案例", "a b"]:
