@@ -535,6 +535,93 @@ class TestC1C6ControlledPair(unittest.TestCase):
         self.assertIn("等待期", case["param_sources"]["S1-01.p3"]["note"])
 
 
+class TestC7C9ComplementaryPair(unittest.TestCase):
+    """
+    C7/C9 受控对照：同一保险人的两款产品，保障范围互补而非重叠。
+    """
+
+    def _pair(self):
+        c7 = compute(case_io.strip_to_compute(
+            case_io.load_case("case-c7-guoshou-b-ics")))
+        c9 = compute(case_io.strip_to_compute(
+            case_io.load_case("case-c9-guoshou-liability-ics")))
+        return c7, c9
+
+    def test_fact_loss_identical(self):
+        c7, c9 = self._pair()
+        self.assertEqual(c7["summary"]["fact_total"], c9["summary"]["fact_total"])
+
+    def test_coverage_is_strictly_complementary(self):
+        """
+        没有任何一个科目在两款产品下都获赔。
+        若出现重叠，说明保单映射有误或案情设计失当。
+        """
+        c7, c9 = self._pair()
+        a = {i["code"]: i for i in c7["items"]}
+        b = {i["code"]: i for i in c9["items"]}
+        overlap = [
+            code for code in a
+            if (a[code]["assessed_loss"] or 0) > 0
+            and a[code]["effective_covered"] > 0
+            and b[code]["effective_covered"] > 0
+        ]
+        self.assertEqual(overlap, [], "存在重叠承保科目：%s" % overlap)
+
+    def test_first_party_only_in_b_third_party_only_in_liability(self):
+        c7, c9 = self._pair()
+        a = {i["code"]: i for i in c7["items"]}
+        b = {i["code"]: i for i in c9["items"]}
+        # 第一方：B 款赔，责任险不赔
+        for code in ("F2-01", "F2-03", "S1-01", "S4-01"):
+            self.assertGreater(a[code]["effective_covered"], 0, code)
+            self.assertEqual(b[code]["effective_covered"], 0.0, code)
+        # 第三方：责任险赔，B 款不赔
+        for code in ("R1-04", "R2-01"):
+            self.assertEqual(a[code]["effective_covered"], 0.0, code)
+            self.assertGreater(b[code]["effective_covered"], 0, code)
+
+    def test_combined_coverage_beats_either_alone(self):
+        c7, c9 = self._pair()
+        fact = c7["summary"]["fact_total"]
+        combined = c7["settlement"]["payable"] + c9["settlement"]["payable"]
+        self.assertGreater(combined, c7["settlement"]["payable"])
+        self.assertGreater(combined, c9["settlement"]["payable"])
+        self.assertGreater(combined / fact, 0.9)
+
+    def test_bi_hour_to_day_conversion(self):
+        """
+        国寿财B款的小时/净利润口径换算：不改 formulas.py，用填参约定表达。
+        p4 必须固定为 1.0，否则净利润会被再乘一次毛利率。
+        """
+        case = case_io.load_case("case-c7-guoshou-b-ics")
+        p = case["items"]["S1-01"]["params"]
+        self.assertEqual(p["p4"], 1.0, "p4 必须为 1.0，净利润口径已体现在 p1")
+        self.assertEqual(p["p2"], 6)   # 144 小时 ÷ 24
+        self.assertEqual(p["p3"], 1)   # 24 小时 ÷ 24
+        for key in ("S1-01.p1", "S1-01.p2", "S1-01.p4"):
+            self.assertIn("口径换算", case["param_sources"][key]["note"])
+
+    def test_higher_of_picks_waiting_over_deductible(self):
+        """免赔期间自留 160,500 > 约定免赔额 150,000，取前者。"""
+        c7, _ = self._pair()
+        bi = c7["settlement"]["bi"]
+        self.assertEqual(bi["mode"], "higher_of")
+        self.assertEqual(bi["gross"], 963000.0)
+        self.assertEqual(bi["waiting_retention"], 160500.0)
+        self.assertEqual(bi["retention_applied"], 160500.0)
+        self.assertEqual(bi["base"], 802500.0)
+
+    def test_betterment_excluded_by_both(self):
+        """加固费与硬件替换两边都不赔——缺口不因多买一张保单而消失。"""
+        c7, c9 = self._pair()
+        a = {i["code"]: i for i in c7["items"]}
+        b = {i["code"]: i for i in c9["items"]}
+        for code in ("F3-02", "S2-01"):
+            self.assertGreater(a[code]["assessed_loss"], 0, code)
+            self.assertEqual(a[code]["effective_covered"], 0.0, code)
+            self.assertEqual(b[code]["effective_covered"], 0.0, code)
+
+
 class TestCaseIO(unittest.TestCase):
     def test_safe_name_rejects_traversal(self):
         for bad in ["../etc/passwd", "a/b", "", "案例", "a b"]:
