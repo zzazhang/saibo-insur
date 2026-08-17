@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """结算层回归测试，重点是三个已知的坑。"""
 
+import json
 import os
 import sys
 import unittest
@@ -802,6 +803,125 @@ class TestC4ContingentBI(unittest.TestCase):
         text = " ".join(case["narrative"]["disputes"])
         self.assertIn("153,920", text)
         self.assertIn("53,391", text)
+
+
+class TestC5PartialModules(unittest.TestCase):
+    """C5：缺口来自投保选择而非条款设计。"""
+
+    def _c5(self):
+        return compute(case_io.strip_to_compute(
+            case_io.load_case("case-c5-sunshine-partial-modules")))
+
+    def test_uninsured_modules_are_overridden_not_unmapped(self):
+        """
+        未投保 ≠ 条款不保。被关掉的科目在条款层面仍判定为承保，
+        include_override 才是关掉它们的原因——两者必须能区分。
+        """
+        r = self._c5()
+        by = {i["code"]: i for i in r["items"]}
+        for code in ("F5-01", "S1-01", "S4-02", "R1-01"):
+            self.assertEqual(by[code]["coverage_status"], "covered", code)
+            self.assertTrue(by[code]["include_override"], code)
+            self.assertEqual(by[code]["include"], "OFF", code)
+            self.assertEqual(by[code]["effective_covered"], 0.0, code)
+
+    def test_overrides_leave_a_trace_in_warnings(self):
+        r = self._c5()
+        overridden = [w for w in r["warnings"] if "手工覆盖" in w]
+        self.assertGreaterEqual(len(overridden), 6)
+
+    def test_full_module_counterfactual_quantifies_the_gap(self):
+        """全投保 vs 部分投保的赔付差额，即投保选择的代价。"""
+        base = case_io.strip_to_compute(
+            case_io.load_case("case-c5-sunshine-partial-modules"))
+        partial = compute(base)
+        full = json.loads(json.dumps(base))
+        for entry in full["items"].values():
+            entry.pop("include_override", None)
+            entry.pop("include", None)
+        full_r = compute(full)
+        self.assertEqual(
+            full_r["summary"]["fact_total"], partial["summary"]["fact_total"])
+        self.assertLess(partial["settlement"]["payout_ratio_vs_fact"], 0.45)
+        self.assertGreater(full_r["settlement"]["payout_ratio_vs_fact"], 0.9)
+
+    def test_ransom_nominal_only_requires_module_12(self):
+        """投了模块1.2才有名义承保；否则连名义都没有。"""
+        by = {i["code"]: i for i in self._c5()["items"]}
+        self.assertEqual(by["S3-01"]["coverage_status"], "nominal_only")
+
+
+class TestC10NarrowCostPolicy(unittest.TestCase):
+    """C10：承保面最窄的产品，加上一个程序性条件的悬崖。"""
+
+    def _c10(self, designated=False):
+        c = case_io.strip_to_compute(
+            case_io.load_case("case-c10-zhufeng-gov-portal"))
+        c["policy_flags"] = {"non_designated_vendor": not designated}
+        return compute(c)
+
+    def test_non_designated_vendor_zeroes_payout(self):
+        r = self._c10(designated=False)
+        self.assertEqual(r["settlement"]["payable"], 0.0)
+        self.assertTrue(r["settlement"]["conditional_notes"])
+        # 事实口径不受影响
+        self.assertGreater(r["summary"]["fact_total"], 2000000)
+
+    def test_designated_vendor_still_pays_little(self):
+        """即便流程走对，承保面窄本身仍是主要缺口。"""
+        r = self._c10(designated=True)
+        self.assertGreater(r["settlement"]["payable"], 0)
+        self.assertLess(r["settlement"]["payout_ratio_vs_fact"], 0.30)
+
+    def test_ddos_and_bi_have_no_home_in_this_policy(self):
+        by = {i["code"]: i for i in self._c10(designated=True)["items"]}
+        self.assertEqual(by["F7-01"]["coverage_status"], "unmapped")
+        self.assertEqual(by["S1-01"]["coverage_status"], "excluded")
+        self.assertEqual(by["F2-03"]["coverage_status"], "excluded")
+        # F2-01 恢复到可访问状态可赔，与 F2-03 数据恢复的边界
+        self.assertIn(by["F2-01"]["coverage_status"],
+                      ("covered", "conditional", "limited"))
+
+
+class TestAllTenCases(unittest.TestCase):
+    """十案整体：编号完整、参数全标注、事实口径非零。"""
+
+    EXPECTED = {"C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C8B", "C9", "C10"}
+
+    def test_all_case_ids_present(self):
+        ids = set()
+        for name in [c["name"] for c in case_io.list_cases()]:
+            if name.startswith("demo-"):
+                continue
+            ids.add(case_io.load_case(name).get("case_id"))
+        self.assertEqual(ids, self.EXPECTED)
+
+    def test_every_case_runs_and_is_fully_annotated(self):
+        catalog = get_catalog()
+        for name in [c["name"] for c in case_io.list_cases()]:
+            if name.startswith("demo-"):
+                continue
+            case = case_io.load_case(name)
+            self.assertEqual(case_io.validate_case(case, catalog), [], name)
+            r = compute(case_io.strip_to_compute(case))
+            self.assertGreater(r["summary"]["fact_total"], 0, name)
+            self.assertEqual(psrc.audit_case(case)["missing"], [], name)
+
+    def test_each_case_uses_a_distinct_policy(self):
+        """一案一保单：除三组受控对照外，保单不得重复。"""
+        seen = {}
+        for name in [c["name"] for c in case_io.list_cases()]:
+            if name.startswith("demo-"):
+                continue
+            case = case_io.load_case(name)
+            seen.setdefault(case["policy_id"], []).append(case["case_id"])
+        # 中远海运有 C8/C8B 两案（反事实），其余保单各一案
+        for pid, ids in seen.items():
+            if pid == "cosco-emergency-service":
+                self.assertEqual(sorted(ids), ["C8", "C8B"])
+            else:
+                self.assertEqual(len(ids), 1, "%s 被 %s 重复使用" % (pid, ids))
+        self.assertEqual(len(seen), 10)
 
 
 class TestCaseIO(unittest.TestCase):
