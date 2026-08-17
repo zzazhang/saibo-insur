@@ -739,6 +739,71 @@ class TestC3ZurichDistinctiveCovers(unittest.TestCase):
         self.assertIn("科目借用", case["param_sources"]["F1-10"]["note"])
 
 
+class TestC4ContingentBI(unittest.TestCase):
+    """C4：从属营业中断，以及 SLA 补偿与保险赔付的重叠。"""
+
+    def _c4(self):
+        return compute(case_io.strip_to_compute(
+            case_io.load_case("case-c4-taikang-cloud-outage")))
+
+    def test_loss_is_purely_contingent(self):
+        """自身系统无故障：S1-01 必须为 0，全部损失走 S1-02。"""
+        by = {i["code"]: i for i in self._c4()["items"]}
+        self.assertEqual(by["S1-01"]["assessed_loss"], 0.0)
+        self.assertGreater(by["S1-02"]["assessed_loss"], 0)
+
+    def test_contingent_bi_diverges_across_policies(self):
+        """从属中断是分歧最大的科目：承保 / 除外 / 无对应责任 / 有限承保 四类并存。"""
+        base = case_io.strip_to_compute(
+            case_io.load_case("case-c4-taikang-cloud-outage"))
+        statuses = {}
+        for p in pol.list_policies():
+            c = dict(base)
+            c["policy_id"] = p["id"]
+            by = {i["code"]: i for i in compute(c)["items"]}
+            statuses[p["id"]] = by["S1-02"]["coverage_status"]
+        self.assertEqual(statuses["taikang-online"], "covered")
+        self.assertEqual(statuses["allianz-ecommerce"], "covered")
+        self.assertEqual(statuses["pingan-cyber-b"], "excluded")
+        self.assertEqual(statuses["sunshine-2016"], "excluded")
+        self.assertEqual(statuses["cosco-emergency-service"], "unmapped")
+        self.assertGreaterEqual(len(set(statuses.values())), 4)
+
+    def test_sla_deducted_from_bi_base_only(self):
+        """
+        SLA 补偿只能扣在营业中断基数上。
+        若从总额扣减，会错误地侵蚀事故响应等其他责任项。
+        """
+        r = self._c4()
+        bi = r["settlement"]["bi"]
+        self.assertEqual(bi["sla_deduction"], -280000.0)
+        self.assertAlmostEqual(
+            bi["base"], bi["base_before_sla"] - 280000.0, places=2)
+        # 非 BI 科目不受 SLA 影响
+        by = {i["code"]: i for i in r["items"]}
+        self.assertGreater(by["F1-01"]["effective_covered"], 0)
+
+    def test_sla_overlap_shrinks_bi_payout(self):
+        """SLA 补偿吃掉大半可赔基数——本案最重要的实务发现。"""
+        bi = self._c4()["settlement"]["bi"]
+        self.assertGreater(bi["gross"], 480000)
+        self.assertLess(bi["base"], 60000)
+
+    def test_higher_of_picks_waiting_this_time(self):
+        """本案等待期自留 153,920 > 免赔额 100,000，取前者。"""
+        bi = self._c4()["settlement"]["bi"]
+        self.assertEqual(bi["mode"], "higher_of")
+        self.assertAlmostEqual(bi["waiting_retention"], 153920.0, places=2)
+        self.assertEqual(bi["retention_applied"], bi["waiting_retention"])
+
+    def test_narrative_states_correct_retention(self):
+        """案情叙述里的数字必须与引擎算出的一致。"""
+        case = case_io.load_case("case-c4-taikang-cloud-outage")
+        text = " ".join(case["narrative"]["disputes"])
+        self.assertIn("153,920", text)
+        self.assertIn("53,391", text)
+
+
 class TestCaseIO(unittest.TestCase):
     def test_safe_name_rejects_traversal(self):
         for bad in ["../etc/passwd", "a/b", "", "案例", "a b"]:
