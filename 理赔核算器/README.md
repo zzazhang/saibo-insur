@@ -11,6 +11,10 @@ Web 端按「案件与损失项 → 参数填写 → 结果报告」三步完成
 
 ---
 
+> 上手与新保单接入见 **[使用指南.md](使用指南.md)**。
+> 保单库预加载了 10 款，但不限于这 10 款——新保单可加进库、可在案例中内联、
+> 也可完全不指定保单只做损失核定，三条路都不需要改代码。
+
 ## 三层口径
 
 工具把「赔多少」拆成三个互相独立的问题，每一层的结论意义完全不同：
@@ -213,7 +217,6 @@ python -m claims_calc.cli audit cases/*.json -v         # 参数来源标注审�
 python -m claims_calc.cli validate cases/*.json         # 只校验结构
 python -m claims_calc.cli run cases/*.json              # 批量跑数
 python -m claims_calc.cli run cases/*.json --md out/    # 导出 Markdown 报告与结果 JSON
-python -m claims_calc.cli run cases/*.json --summary out/总览.md
 python -m claims_calc.cli compare cases/case-01.json \
        --policies pingan-cyber-b,taikang-online         # 同一事故跑多张保单
 ```

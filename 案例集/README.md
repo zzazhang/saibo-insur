@@ -5,7 +5,7 @@
 
 ```bash
 cd 理赔核算器
-python -m claims_calc.cli run cases/*.json --md ../案例集/案例报告 --summary ../案例集/案例总览.md
+python -m claims_calc.cli run cases/*.json --md ../案例集/案例报告
 python -m claims_calc.cli mapping <保单id> --out ../案例集/条款责任对应表/<保单id>.md
 python -m claims_calc.cli compare cases/<案例>.json --policies <id1>,<id2>
 ```
@@ -17,7 +17,6 @@ python -m claims_calc.cli compare cases/<案例>.json --policies <id1>,<id2>
 | `理赔核算器/cases/*.json` | 案例源文件（唯一事实来源，含案情叙述与全部参数） |
 | `案例集/案例报告/` | 自动生成的案例报告与结果 JSON |
 | `案例集/条款责任对应表/` | 各保单的 69 项完整责任映射 |
-| `案例集/案例总览.md` | 全部案例的赔付率对照 |
 | `案例集/十案汇总（含案情）.md` | **主交付物**：总表 + 逐案案情 + 三组对比 + 结构性发现 |
 
 案例报告与对应表均为**生成物，不要手工编辑**——改案例源文件后重跑即可。
